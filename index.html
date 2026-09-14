@@ -44,7 +44,7 @@
       color: var(--text-main);
       line-height: 1.5;
       padding: 16px;
-      max-width: 1000px;
+      max-width: 1200px;
       margin: 0 auto;
       min-height: 100vh;
     }
@@ -209,10 +209,42 @@
       margin-right: 6px;
     }
 
-    .grid {
+    /* Динамическая разметка в стиле Twitter (справа колонка для заметок, слева для остальных) */
+    .dashboard-layout {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: 1fr;
+      gap: 20px;
+      transition: grid-template-columns 0.3s ease;
+    }
+
+    @media (min-width: 900px) {
+      .dashboard-layout.has-twitter {
+        grid-template-columns: 1fr 360px; /* Слева основные виджеты, справа стена заметок */
+      }
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 16px;
+      align-content: start;
+    }
+
+    /* Колонка заметок в стиле Twitter (справа) */
+    .twitter-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .twitter-column-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: -4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .card {
@@ -349,7 +381,7 @@
     }
 
     textarea.widget-input {
-      min-height: 90px;
+      min-height: 80px;
       resize: vertical;
     }
 
@@ -394,6 +426,54 @@
     .task-item.done input[type="text"] {
       text-decoration: line-through;
       color: var(--text-muted);
+    }
+
+    /* Стили постов-заметок (стена Твиттера) */
+    .tweet-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .tweet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .tweet-text {
+      width: 100%;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .tweet-text:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    .tweet-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .tweet-actions button {
+      padding: 4px 10px;
+      font-size: 0.75rem;
     }
   </style>
 </head>
@@ -452,16 +532,22 @@
       <button class="primary" onclick="addWidget('counter')">+ Счетчик дней</button>
       <button class="primary" onclick="addWidget('savings')">+ Накопление</button>
       <button class="primary" onclick="addWidget('tasks')">+ Список задач</button>
-      <button class="primary" onclick="addWidget('diary')">+ Дневник / Заметка</button>
+      <button class="primary" onclick="addWidget('diary')">+ Заметка (Твиттер)</button>
     </div>
 
-    <div class="grid" id="dashboard">
-      <!-- Виджеты -->
+    <!-- Общий макет дашборда: при наличии заметок трансформируется в 2 колонки -->
+    <div class="dashboard-layout" id="dashboardLayout">
+      <div class="main-grid" id="mainDashboard">
+        <!-- Основные виджеты (счетчики, цели, задачи) -->
+      </div>
+      <div class="twitter-column" id="twitterColumn" style="display: none;">
+        <div class="twitter-column-title"><span>Лента заметок</span></div>
+        <div id="twitterTweetsList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    // ИНИЦИАЛИЗАЦИЯ ВАШЕГО FIREBASE ПРОЕКТА
     const firebaseConfig = {
       apiKey: "AIzaSyC1dYhFACaNjKZeqnzDxDqKV2R5XlyPwEE",
       authDomain: "merdary-rebirth.firebaseapp.com",
@@ -479,7 +565,6 @@
     let currentUser = null;
     let widgets = [];
 
-    // Отслеживание входа/выхода
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         currentUser = user;
@@ -515,7 +600,6 @@
       }
     }
 
-    // Вход
     async function handleLogin(e) {
       e.preventDefault();
       const loginError = document.getElementById('loginError');
@@ -528,7 +612,6 @@
         await auth.signInWithEmailAndPassword(email, password);
       } catch (error) {
         console.error("Login Error:", error.code);
-        // Объединили ошибки в одну универсальную для безопасности и удобства
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
           loginError.innerText = 'неверный логин или пароль';
         } else {
@@ -537,7 +620,6 @@
       }
     }
 
-    // Регистрация (теперь создает абсолютно пустой аккаунт без виджетов)
     async function handleRegister(e) {
       e.preventDefault();
       const regError = document.getElementById('regError');
@@ -551,14 +633,12 @@
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
-        // Сохраняем только профиль пользователя
         await db.collection('users').doc(user.uid).set({
           name: name,
           email: email,
           createdAt: new Date()
         });
 
-        // Создаем пустой список виджетов для нового аккаунта
         await db.collection('users').doc(user.uid).collection('data').doc('widgets').set({
           list: []
         });
@@ -574,11 +654,11 @@
         }
       }
     }
+
     function logout() {
       auth.signOut();
     }
 
-    // Загрузка виджетов
     async function loadUserWidgets() {
       if (!currentUser) return;
       try {
@@ -594,7 +674,6 @@
       }
     }
 
-    // Сохранение виджетов
     async function saveAndRender() {
       render();
       if (!currentUser) return;
@@ -617,13 +696,24 @@
     }
 
     function addWidget(type) {
+      const now = new Date();
+      const timeString = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' в ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
       const newWidget = {
         id: Date.now(),
         type: type,
         title: getDefaultTitle(type),
+        createdAt: timeString,
         data: getDefaultData(type)
       };
-      widgets.push(newWidget);
+      
+      // Если это заметка в стиле Твиттера, добавляем её в НАЧАЛО массива, чтобы новые были сверху
+      if (type === 'diary') {
+        widgets.unshift(newWidget);
+      } else {
+        widgets.push(newWidget);
+      }
+
       saveAndRender();
     }
 
@@ -651,10 +741,42 @@
     }
 
     function render() {
-      const container = document.getElementById('dashboard');
-      container.innerHTML = '';
+      const mainGrid = document.getElementById('mainDashboard');
+      const twitterColumn = document.getElementById('twitterColumn');
+      const twitterTweetsList = document.getElementById('twitterTweetsList');
+      const dashboardLayout = document.getElementById('dashboardLayout');
 
-      widgets.forEach(w => {
+      mainGrid.innerHTML = '';
+      twitterTweetsList.innerHTML = '';
+
+      // Фильтруем заметки (тип 'diary') отдельно от остальных виджетов
+      const diaryWidgets = widgets.filter(w => w.type === 'diary');
+      const otherWidgets = widgets.filter(w => w.type !== 'diary');
+
+      // Управление стеной Твиттера справа
+      if (diaryWidgets.length > 0) {
+        dashboardLayout.classList.add('has-twitter');
+        twitterColumn.style.display = 'flex';
+
+        diaryWidgets.forEach(w => {
+          const tweetCard = document.createElement('div');
+          tweetCard.className = 'tweet-card';
+          tweetCard.innerHTML = `
+            <div class="tweet-header">
+              <span>${w.createdAt || 'Только что'}</span>
+              <button class="btn-delete" onclick="deleteWidget(${w.id})" title="Удалить заметку">&times;</button>
+            </div>
+            <textarea class="tweet-text" placeholder="Что нового?" onchange="updateDiary(${w.id}, this.value)">${w.data.text || ''}</textarea>
+          `;
+          twitterTweetsList.appendChild(tweetCard);
+        });
+      } else {
+        dashboardLayout.classList.remove('has-twitter');
+        twitterColumn.style.display = 'none';
+      }
+
+      // Отрисовка остальных виджетов (счетчики, цели, задачи) в центре
+      otherWidgets.forEach(w => {
         const card = document.createElement('div');
         card.className = 'card';
 
@@ -705,11 +827,6 @@
             <div class="task-list">${itemsHTML}</div>
             <button onclick="addTask(${w.id})">+ Добавить задачу</button>
           `;
-        } 
-        else if (w.type === 'diary') {
-          bodyHTML = `
-            <textarea class="widget-input" placeholder="Напиши мысли..." onchange="updateDiary(${w.id}, this.value)">${w.data.text}</textarea>
-          `;
         }
 
         card.innerHTML = `
@@ -720,7 +837,7 @@
           ${bodyHTML}
         `;
 
-        container.appendChild(card);
+        mainGrid.appendChild(card);
       });
     }
 
