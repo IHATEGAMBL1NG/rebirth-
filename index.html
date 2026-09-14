@@ -151,6 +151,21 @@
       font-weight: 500;
     }
 
+    .forgot-password-link {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-align: right;
+      cursor: pointer;
+      margin-top: -6px;
+      transition: color 0.2s;
+    }
+
+    .forgot-password-link:hover {
+      color: var(--accent-color);
+    }
+
     /* Главный экран */
     #dashboardScreen {
       display: none;
@@ -785,6 +800,20 @@
     </div>
   </div>
 
+  <!-- Модальное окно сброса/восстановления пароля -->
+  <div id="forgotModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-text" style="font-weight: 600; color: #fff;">Восстановление пароля</div>
+      <div class="modal-text" style="font-size: 0.85rem; color: var(--text-muted);">Укажите почту, привязанную к аккаунту, и мы отправим на неё инструкции для сброса.</div>
+      <input type="email" id="forgotEmailInput" class="widget-input" placeholder="Ваша почта (Email)">
+      <div id="forgotError" class="auth-error" style="text-align: center;"></div>
+      <div class="modal-buttons">
+        <button onclick="closeForgotModal()">Отмена</button>
+        <button class="primary" onclick="submitForgotPassword()">Отправить</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Экран Входа / Регистрации -->
   <div id="authScreen">
     <div class="auth-card">
@@ -803,6 +832,7 @@
       <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
         <input type="email" id="loginEmail" class="auth-input" placeholder="Ваша почта (Email)" required>
         <input type="password" id="loginPassword" class="auth-input" placeholder="Пароль" required>
+        <button type="button" class="forgot-password-link" onclick="openForgotModal()">Забыли пароль?</button>
         <div id="loginError" class="auth-error"></div>
         <button type="submit" class="primary" style="padding: 12px;">Войти в личный кабинет</button>
       </form>
@@ -993,6 +1023,43 @@
           regError.innerText = 'пароль слишком простой (мин. 6 символов)';
         } else {
           regError.innerText = 'ошибка при регистрации';
+        }
+      }
+    }
+
+    // Функции модального окна восстановления пароля
+    function openForgotModal() {
+      document.getElementById('forgotError').innerText = '';
+      document.getElementById('forgotEmailInput').value = document.getElementById('loginEmail').value;
+      document.getElementById('forgotModal').classList.add('show');
+    }
+
+    function closeForgotModal() {
+      document.getElementById('forgotModal').classList.remove('show');
+    }
+
+    async function submitForgotPassword() {
+      const emailInput = document.getElementById('forgotEmailInput');
+      const forgotError = document.getElementById('forgotError');
+      const email = emailInput.value.trim();
+
+      if (!email) {
+        forgotError.innerText = 'укажите вашу почту';
+        return;
+      }
+
+      try {
+        await auth.sendPasswordResetEmail(email);
+        alert('Инструкции по восстановлению пароля отправлены на почту: ' + email);
+        closeForgotModal();
+      } catch (error) {
+        console.error("Reset Password Error:", error.code);
+        if (error.code === 'auth/user-not-found') {
+          forgotError.innerText = 'пользователь с такой почтой не найден';
+        } else if (error.code === 'auth/invalid-email') {
+          forgotError.innerText = 'некорректный формат почты';
+        } else {
+          forgotError.innerText = 'ошибка отправки письма';
         }
       }
     }
@@ -1239,7 +1306,6 @@
     let draggedId = null;
 
     function setupDragAndDropForCard(cardElement, id) {
-      // ПК (HTML5 Drag and Drop)
       cardElement.setAttribute('draggable', 'true');
 
       cardElement.addEventListener('dragstart', (e) => {
@@ -1276,18 +1342,11 @@
         }
       });
 
-      // Телефон / Сенсорные экраны (Touch Events)
-      let touchStartY = 0;
-      let touchStartX = 0;
-
       cardElement.addEventListener('touchstart', (e) => {
-        // Игнорируем зажатие внутри инпутов, кнопок и полей редактирования
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON' || e.target.isContentEditable) {
           return;
         }
         draggedId = id;
-        touchStartY = e.touches[0].clientY;
-        touchStartX = e.touches[0].clientX;
         cardElement.classList.add('dragging');
       }, { passive: true });
 
@@ -1295,7 +1354,6 @@
         if (draggedId !== id) return;
         
         const touch = e.touches[0];
-        // Находим элемент под пальцем в данный момент
         const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
         const targetCard = elementUnder ? elementUnder.closest('.card') : null;
 
@@ -1417,7 +1475,6 @@
         paginationContainer.style.display = 'none';
       }
 
-      // Рендеринг остальных виджетов с поддержкой перетаскивания
       otherWidgets.forEach(w => {
         const card = document.createElement('div');
         card.className = 'card';
@@ -1516,9 +1573,7 @@
           ${bodyHTML}
         `;
 
-        // Подключаем логику перетаскивания к карточке
         setupDragAndDropForCard(card, w.id);
-
         mainGrid.appendChild(card);
       });
     }
