@@ -1,534 +1,709 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный Трекер</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REBIRTH</title>
+  
+  <!-- Иконка для вкладки браузера -->
+  <link rel="icon" type="image/png" href="icon.png?v=2">
+  <link rel="apple-touch-icon" href="icon.png?v=2">
 
-        body {
-            background-color: #f4f7f6;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #1e1f22;
+      --card-bg: #2b2d31;
+      --card-hover: #313338;
+      --border-color: #3f4248;
+      --text-main: #dbdee1;
+      --text-muted: #949ba4;
+      --accent-color: #5865f2;
+      --accent-hover: #4752c4;
+      --success-color: #23a55a;
+      --danger-color: #f23f43;
+      --warning-color: #f0b232;
+    }
 
-        /* Экран Авторизации */
-        .auth-screen {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #2b5876, #4e4376);
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
 
-        .auth-card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            width: 100%;
-            max-width: 400px;
-        }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 16px;
+      max-width: 1000px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
 
-        .auth-tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #eee;
-        }
+    /* Логотип */
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      filter: invert(1);
+    }
 
-        .auth-tab {
-            flex: 1;
-            padding: 10px;
-            background: none;
-            border: none;
-            font-size: 16px;
-            font-weight: bold;
-            color: #888;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-        .auth-tab.active {
-            color: #4e4376;
-            border-bottom: 3px solid #4e4376;
-        }
+    /* Экран Входа / Регистрации */
+    #authScreen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 80vh;
+    }
 
-        .auth-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+    .auth-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
 
-        .auth-form input {
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 14px;
-        }
+    .auth-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
 
-        .auth-form button {
-            padding: 12px;
-            background: #4e4376;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+    .auth-header h2 {
+      color: #ffffff;
+      margin-top: 8px;
+      font-size: 1.4rem;
+    }
 
-        .auth-form button:hover {
-            background: #2b5876;
-        }
+    /* Табы (Переключатель Вход / Регистрация) */
+    .auth-tabs {
+      display: flex;
+      background-color: var(--bg-color);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+    }
 
-        /* Главный Экран */
-        .app-screen {
-            display: none;
-            flex-direction: column;
-            height: 100vh;
-        }
+    .auth-tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
 
-        header {
-            background: white;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
+    .auth-tab-btn.active {
+      background-color: var(--accent-color);
+      color: #ffffff;
+    }
 
-        .header-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #2b5876;
-        }
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
 
-        .sync-status {
-            font-size: 13px;
-            color: #28a745;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+    .auth-input {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-size: 0.9rem;
+    }
 
-        .btn-logout {
-            padding: 8px 16px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+    .auth-input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
 
-        /* Управление Виджетами */
-        .controls {
-            padding: 20px 30px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            background: #eaeaea;
-            align-items: center;
-        }
+    /* Главный Экран (скрыт до авторизации) */
+    #dashboardScreen {
+      display: none;
+    }
 
-        .controls span {
-            font-weight: bold;
-            margin-right: 10px;
-        }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
 
-        .btn-add {
-            padding: 8px 14px;
-            background: #2b5876;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: 0.2s;
-        }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
 
-        .btn-add:hover {
-            background: #4e4376;
-        }
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
 
-        /* Сетка Виджетов */
-        .dashboard {
-            padding: 30px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            overflow-y: auto;
-        }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-        .widget {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            position: relative;
-        }
+    .sync-status {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--success-color);
+    }
 
-        .widget-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 8px;
-        }
+    /* Панель добавления виджетов */
+    .widget-controls {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
 
-        .widget-title {
-            font-weight: bold;
-            color: #4e4376;
-            outline: none;
-        }
+    .widget-controls-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-right: 6px;
+    }
 
-        .btn-delete {
-            background: none;
-            border: none;
-            color: #ccc;
-            font-size: 18px;
-            cursor: pointer;
-        }
+    /* Сетка Виджетов */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
 
-        .btn-delete:hover {
-            color: #dc3545;
-        }
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
 
-        /* Интерактивные элементы виджетов */
-        .counter-val {
-            font-size: 36px;
-            font-weight: bold;
-            text-align: center;
-            color: #2b5876;
-            margin: 10px 0;
-        }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
 
-        .counter-btns {
-            display: flex;
-            gap: 10px;
-        }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #ffffff;
+      outline: none;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
 
-        .counter-btns button {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ccc;
-            background: #f9f9f9;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+    .card-title:focus {
+      background-color: var(--bg-color);
+    }
 
-        .editable-text {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #eee;
-            border-radius: 4px;
-            resize: vertical;
-            min-height: 80px;
-        }
+    .btn-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
 
-        .task-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 6px;
-        }
+    .btn-delete:hover {
+      color: var(--danger-color);
+      background-color: var(--bg-color);
+    }
 
-        .task-item input[type="text"] {
-            flex: 1;
-            padding: 4px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
+    .metric-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-align: center;
+      margin: 8px 0 14px 0;
+    }
 
-        .progress-bar {
-            width: 100%;
-            background: #eee;
-            height: 12px;
-            border-radius: 6px;
-            overflow: hidden;
-        }
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background-color: var(--bg-color);
+      border-radius: 6px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
 
-        .progress-fill {
-            height: 100%;
-            background: #28a745;
-            width: 0%;
-            transition: width 0.3s;
-        }
-    </style>
+    .progress-fill {
+      height: 100%;
+      background-color: var(--success-color);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Кнопки */
+    button {
+      background-color: var(--card-hover);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background-color: var(--border-color);
+      color: #ffffff;
+    }
+
+    button.primary {
+      background-color: var(--accent-color);
+      color: #ffffff;
+      border: none;
+    }
+
+    button.primary:hover {
+      background-color: var(--accent-hover);
+    }
+
+    button.danger {
+      background-color: rgba(242, 63, 67, 0.15);
+      color: var(--danger-color);
+      border: 1px solid rgba(242, 63, 67, 0.3);
+    }
+
+    button.danger:hover {
+      background-color: var(--danger-color);
+      color: #ffffff;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-group button {
+      flex: 1;
+    }
+
+    /* Поля внутри виджетов */
+    .widget-input {
+      width: 100%;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 8px 10px;
+      font-size: 0.85rem;
+    }
+
+    .widget-input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    textarea.widget-input {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .savings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .savings-row input {
+      width: 100px;
+    }
+
+    /* Списки задач */
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .task-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-color);
+      cursor: pointer;
+    }
+
+    .task-item input[type="text"] {
+      flex: 1;
+    }
+
+    .task-item.done input[type="text"] {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+  </style>
 </head>
 <body>
 
-    <!-- Экран Входа / Регистрации -->
-    <div id="authScreen" class="auth-screen">
-        <div class="auth-card">
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="switchAuthTab('login')">Вход</button>
-                <button class="auth-tab" onclick="switchAuthTab('register')">Регистрация</button>
+  <!-- Экран Входа / Регистрации -->
+  <div id="authScreen">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="brand-container">
+          <img src="icon.png" alt="Logo" class="brand-logo">
+          <h2>REBIRTH</h2>
+        </div>
+      </div>
+
+      <!-- Табы -->
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" onclick="setAuthTab('login')">Вход</button>
+        <button class="auth-tab-btn" onclick="setAuthTab('register')">Регистрация</button>
+      </div>
+
+      <!-- Форма Входа -->
+      <form id="loginForm" class="auth-form" onsubmit="handleAuth(event)">
+        <input type="email" class="auth-input" placeholder="Ваша почта (Email)" required>
+        <input type="password" class="auth-input" placeholder="Пароль" required>
+        <button type="submit" class="primary" style="margin-top: 8px; padding: 10px;">Войти в личный кабинет</button>
+      </form>
+
+      <!-- Форма Регистрации -->
+      <form id="registerForm" class="auth-form" style="display: none;" onsubmit="handleAuth(event)">
+        <input type="text" class="auth-input" placeholder="Имя профиля" required>
+        <input type="email" class="auth-input" placeholder="Ваша почта (Email)" required>
+        <input type="password" class="auth-input" placeholder="Придумайте пароль" required>
+        <button type="submit" class="primary" style="margin-top: 8px; padding: 10px;">Создать аккаунт</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Главный Экран (Дашборд) -->
+  <div id="dashboardScreen">
+    <header>
+      <div>
+        <div class="brand-container">
+          <img src="icon.png" alt="Logo" class="brand-logo">
+          <h1>REBIRTH</h1>
+        </div>
+        <div class="subtitle">Личная система трекинга и трансформации</div>
+      </div>
+      <div class="header-right">
+        <div class="sync-status">● Синхронизировано</div>
+        <button style="padding: 6px 12px;" onclick="logout()">Выйти</button>
+      </div>
+    </header>
+
+    <!-- Панель управления виджетами -->
+    <div class="widget-controls">
+      <span class="widget-controls-title">Добавить виджет:</span>
+      <button class="primary" onclick="addWidget('counter')">+ Счетчик дней</button>
+      <button class="primary" onclick="addWidget('savings')">+ Накопление</button>
+      <button class="primary" onclick="addWidget('tasks')">+ Список задач</button>
+      <button class="primary" onclick="addWidget('diary')">+ Дневник / Заметка</button>
+    </div>
+
+    <!-- Контейнер с видами карточек -->
+    <div class="grid" id="dashboard">
+      <!-- Виджеты генерируются автоматически -->
+    </div>
+  </div>
+
+  <script>
+    // Хранилище виджетов
+    let widgets = JSON.parse(localStorage.getItem('rebirth_widgets')) || [
+      { id: 1, type: 'counter', title: 'Чистые дни без ставок', data: { count: 0 } },
+      { id: 2, type: 'savings', title: 'Цель: Переезд в Екб', data: { current: 0, target: 120000 } }
+    ];
+
+    // Переключение табов авторизации
+    function setAuthTab(mode) {
+      const tabs = document.querySelectorAll('.auth-tab-btn');
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+
+      if (mode === 'login') {
+        tabs[0].classList.add('active');
+        tabs[1].classList.remove('active');
+        loginForm.style.display = 'flex';
+        registerForm.style.display = 'none';
+      } else {
+        tabs[1].classList.add('active');
+        tabs[0].classList.remove('active');
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'flex';
+      }
+    }
+
+    // Обработка Входа / Регистрации
+    function handleAuth(e) {
+      e.preventDefault();
+      localStorage.setItem('rebirth_logged_in', 'true');
+      showDashboard();
+    }
+
+    // Выход из системы
+    function logout() {
+      localStorage.removeItem('rebirth_logged_in');
+      document.getElementById('authScreen').style.display = 'flex';
+      document.getElementById('dashboardScreen').style.display = 'none';
+    }
+
+    // Отображение главной страницы
+    function showDashboard() {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('dashboardScreen').style.display = 'block';
+      render();
+    }
+
+    // Проверка статуса входа
+    if (localStorage.getItem('rebirth_logged_in') === 'true') {
+      showDashboard();
+    }
+
+    // Добавление виджета
+    function addWidget(type) {
+      const newWidget = {
+        id: Date.now(),
+        type: type,
+        title: getDefaultTitle(type),
+        data: getDefaultData(type)
+      };
+      widgets.push(newWidget);
+      saveAndRender();
+    }
+
+    function getDefaultTitle(type) {
+      switch(type) {
+        case 'counter': return 'Счетчик дней';
+        case 'savings': return 'Финансовая цель';
+        case 'tasks': return 'Мои задачи';
+        case 'diary': return 'Заметка';
+      }
+    }
+
+    function getDefaultData(type) {
+      switch(type) {
+        case 'counter': return { count: 0 };
+        case 'savings': return { current: 0, target: 100000 };
+        case 'tasks': return [{ text: 'Первая задача', done: false }];
+        case 'diary': return { text: '' };
+      }
+    }
+
+    // Удаление виджета
+    function deleteWidget(id) {
+      widgets = widgets.filter(w => w.id !== id);
+      saveAndRender();
+    }
+
+    // Сохранение и обновление экрана
+    function saveAndRender() {
+      localStorage.setItem('rebirth_widgets', JSON.stringify(widgets));
+      render();
+    }
+
+    // Генерация всех элементов
+    function render() {
+      const container = document.getElementById('dashboard');
+      container.innerHTML = '';
+
+      widgets.forEach(w => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        let bodyHTML = '';
+
+        // 1. Счетчик
+        if (w.type === 'counter') {
+          bodyHTML = `
+            <div class="metric-value">${w.data.count} <span style="font-size: 1.2rem; color: var(--text-muted);">дн.</span></div>
+            <div class="btn-group">
+              <button class="primary" onclick="updateCounter(${w.id}, 1)">+1 День</button>
+              <button onclick="updateCounter(${w.id}, -1)">-1</button>
+              <button class="danger" onclick="resetCounter(${w.id})">Срыв / Сброс</button>
             </div>
+          `;
+        } 
+        // 2. Накопления
+        else if (w.type === 'savings') {
+          const current = w.data.current || 0;
+          const target = w.data.target || 1;
+          const percent = Math.min(100, Math.round((current / target) * 100));
+          
+          bodyHTML = `
+            <div>
+              <div class="savings-row">
+                <span>Накоплено:</span>
+                <input type="number" class="widget-input" value="${current}" onchange="updateSavings(${w.id}, 'current', this.value)">
+              </div>
+              <div class="savings-row">
+                <span>Цель (руб):</span>
+                <input type="number" class="widget-input" value="${target}" onchange="updateSavings(${w.id}, 'target', this.value)">
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${percent}%;"></div>
+              </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); text-align: right;">Прогресс: ${percent}%</div>
+            </div>
+          `;
+        } 
+        // 3. Задачи
+        else if (w.type === 'tasks') {
+          const itemsHTML = w.data.map((task, idx) => `
+            <div class="task-item ${task.done ? 'done' : ''}">
+              <input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggleTask(${w.id}, ${idx})">
+              <input type="text" class="widget-input" value="${task.text}" onchange="updateTaskText(${w.id}, ${idx}, this.value)">
+              <button class="btn-delete" onclick="removeTask(${w.id}, ${idx})">&times;</button>
+            </div>
+          `).join('');
 
-            <!-- Форма Входа -->
-            <form id="loginForm" class="auth-form" onsubmit="handleAuth(event)">
-                <input type="email" placeholder="Email" required>
-                <input type="password" placeholder="Пароль" required>
-                <button type="submit">Войти в кабинет</button>
-            </form>
-
-            <!-- Форма Регистрации -->
-            <form id="registerForm" class="auth-form" style="display: none;" onsubmit="handleAuth(event)">
-                <input type="text" placeholder="Ваше имя" required>
-                <input type="email" placeholder="Email" required>
-                <input type="password" placeholder="Придумайте пароль" required>
-                <button type="submit">Создать аккаунт</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Главный Экран Приложения -->
-    <div id="appScreen" class="app-screen">
-        <header>
-            <div class="header-title">Мой Личный Дневник</div>
-            <div class="sync-status">● Данные синхронизированы</div>
-            <button class="btn-logout" onclick="logout()">Выйти</button>
-        </header>
-
-        <div class="controls">
-            <span>Добавить виджет:</span>
-            <button class="btn-add" onclick="addWidget('counter')">+ Счетчик дней</button>
-            <button class="btn-add" onclick="addWidget('savings')">+ Накопление</button>
-            <button class="btn-add" onclick="addWidget('tasks')">+ Задачи</button>
-            <button class="btn-add" onclick="addWidget('diary')">+ Дневник</button>
-        </div>
-
-        <div class="dashboard" id="dashboard">
-            <!-- Динамические виджеты появятся здесь -->
-        </div>
-    </div>
-
-    <script>
-        let widgets = JSON.parse(localStorage.getItem('user_widgets')) || [];
-
-        // Переключение между Входом и Регистрацией
-        function switchAuthTab(type) {
-            const tabs = document.querySelectorAll('.auth-tab');
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
-
-            tabs.forEach(tab => tab.classList.remove('active'));
-
-            if (type === 'login') {
-                tabs[0].classList.add('active');
-                loginForm.style.display = 'flex';
-                registerForm.style.display = 'none';
-            } else {
-                tabs[1].classList.add('active');
-                loginForm.style.display = 'none';
-                registerForm.style.display = 'flex';
-            }
+          bodyHTML = `
+            <div class="task-list">${itemsHTML}</div>
+            <button onclick="addTask(${w.id})">+ Добавить задачу</button>
+          `;
+        } 
+        // 4. Дневник
+        else if (w.type === 'diary') {
+          bodyHTML = `
+            <textarea class="widget-input" placeholder="Напиши мысли или заметку..." onchange="updateDiary(${w.id}, this.value)">${w.data.text}</textarea>
+          `;
         }
 
-        // Авторизация / Регистрация
-        function handleAuth(e) {
-            e.preventDefault();
-            localStorage.setItem('is_auth', 'true');
-            showApp();
-        }
+        card.innerHTML = `
+          <div class="card-header">
+            <span class="card-title" contenteditable="true" onblur="updateTitle(${w.id}, this.innerText)">${w.title}</span>
+            <button class="btn-delete" onclick="deleteWidget(${w.id})">&times;</button>
+          </div>
+          ${bodyHTML}
+        `;
 
-        // Выход из системы
-        function logout() {
-            localStorage.removeItem('is_auth');
-            document.getElementById('authScreen').style.display = 'flex';
-            document.getElementById('appScreen').style.display = 'none';
-        }
+        container.appendChild(card);
+      });
+    }
 
-        // Показ приложения при авторизации
-        function showApp() {
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('appScreen').style.display = 'flex';
-            renderWidgets();
-        }
+    // Редактирование заголовка по клику
+    function updateTitle(id, newTitle) {
+      const widget = widgets.find(w => w.id === id);
+      if (widget) {
+        widget.title = newTitle;
+        localStorage.setItem('rebirth_widgets', JSON.stringify(widgets));
+      }
+    }
 
-        // Проверка состояния при загрузке
-        if (localStorage.getItem('is_auth') === 'true') {
-            showApp();
+    // Логика Счетчика
+    function updateCounter(id, delta) {
+      const widget = widgets.find(w => w.id === id);
+      if (widget) {
+        widget.data.count = Math.max(0, (widget.data.count || 0) + delta);
+        saveAndRender();
+      }
+    }
+    function resetCounter(id) {
+      if (confirm('Сбросить значение счетчика?')) {
+        const widget = widgets.find(w => w.id === id);
+        if (widget) {
+          widget.data.count = 0;
+          saveAndRender();
         }
+      }
+    }
 
-        // Добавление нового виджета
-        function addWidget(type) {
-            const newWidget = {
-                id: Date.now(),
-                type: type,
-                title: getDefaultTitle(type),
-                data: getDefaultData(type)
-            };
-            widgets.push(newWidget);
-            saveAndRender();
-        }
+    // Логика Накоплений
+    function updateSavings(id, field, val) {
+      const widget = widgets.find(w => w.id === id);
+      if (widget) {
+        widget.data[field] = parseFloat(val) || 0;
+        saveAndRender();
+      }
+    }
 
-        function getDefaultTitle(type) {
-            switch(type) {
-                case 'counter': return 'Счетчик (дней без...)';
-                case 'savings': return 'Цель накопления';
-                case 'tasks': return 'Список задач';
-                case 'diary': return 'Заметка / Дневник';
-            }
-        }
+    // Логика Задач
+    function addTask(id) {
+      const widget = widgets.find(w => w.id === id);
+      if (widget) {
+        widget.data.push({ text: 'Новая задача', done: false });
+        saveAndRender();
+      }
+    }
+    function toggleTask(id, idx) {
+      const widget = widgets.find(w => w.id === id);
+      if (widget) {
+        widget.data[idx].done = !widget.data[idx].done;
+        saveAndRender();
+      }
+    }
+    function updateTaskText(id, idx, val) {
+      const widget = widgets.find(w => w.id === id);
+      if (widget) {
+        widget.data[idx].text = val;
+        localStorage.setItem('rebirth_widgets', JSON.stringify(widgets));
+      }
+    }
+    function removeTask(id, idx) {
+      const widget = widgets.find(w => w.id === id);
+      if (widget) {
+        widget.data.splice(idx, 1);
+        saveAndRender();
+      }
+    }
 
-        function getDefaultData(type) {
-            switch(type) {
-                case 'counter': return { count: 0 };
-                case 'savings': return { current: 0, target: 10000 };
-                case 'tasks': return [{ text: 'Новая задача', done: false }];
-                case 'diary': return { text: '' };
-            }
-        }
-
-        // Удаление виджета
-        function deleteWidget(id) {
-            widgets = widgets.filter(w => w.id !== id);
-            saveAndRender();
-        }
-
-        // Сохранение изменений в хранилище и перерисовка
-        function saveAndRender() {
-            localStorage.setItem('user_widgets', JSON.stringify(widgets));
-            renderWidgets();
-        }
-
-        // Отрисовка виджетов
-        function renderWidgets() {
-            const container = document.getElementById('dashboard');
-            container.innerHTML = '';
-
-            widgets.forEach(w => {
-                const card = document.createElement('div');
-                card.className = 'widget';
-                
-                let contentHTML = '';
-
-                if (w.type === 'counter') {
-                    contentHTML = `
-                        <div class="counter-val">${w.data.count} дн.</div>
-                        <div class="counter-btns">
-                            <button onclick="updateCounter(${w.id}, 1)">+1 день</button>
-                            <button onclick="updateCounter(${w.id}, -1)">-1 день</button>
-                            <button onclick="resetCounter(${w.id})">Сброс</button>
-                        </div>
-                    `;
-                } else if (w.type === 'savings') {
-                    const percent = Math.min(100, Math.round((w.data.current / w.data.target) * 100) || 0);
-                    contentHTML = `
-                        <div>Собрано: <input type="number" value="${w.data.current}" onchange="updateSavings(${w.id}, 'current', this.value)" style="width: 70px;"> руб.</div>
-                        <div>Цель: <input type="number" value="${w.data.target}" onchange="updateSavings(${w.id}, 'target', this.value)" style="width: 70px;"> руб.</div>
-                        <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div>
-                    `;
-                } else if (w.type === 'tasks') {
-                    let taskList = w.data.map((t, index) => `
-                        <div class="task-item">
-                            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${w.id}, ${index})">
-                            <input type="text" value="${t.text}" onchange="updateTaskText(${w.id}, ${index}, this.value)">
-                            <button style="border:none; background:none; cursor:pointer;" onclick="removeTask(${w.id}, ${index})">✕</button>
-                        </div>
-                    `).join('');
-                    contentHTML = `${taskList}<button class="btn-add" style="margin-top:5px;" onclick="addTaskItem(${w.id})">+ Задача</button>`;
-                } else if (w.type === 'diary') {
-                    contentHTML = `
-                        <textarea class="editable-text" placeholder="Пишите здесь..." onchange="updateDiary(${w.id}, this.value)">${w.data.text}</textarea>
-                    `;
-                }
-
-                card.innerHTML = `
-                    <div class="widget-header">
-                        <span class="widget-title" contenteditable="true" onblur="updateTitle(${w.id}, this.innerText)">${w.title}</span>
-                        <button class="btn-delete" onclick="deleteWidget(${w.id})">&times;</button>
-                    </div>
-                    ${contentHTML}
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // Функция обновления заглавий виджетов
-        function updateTitle(id, newTitle) {
-            const widget = widgets.find(w => w.id === id);
-            if (widget) {
-                widget.title = newTitle;
-                localStorage.setItem('user_widgets', JSON.stringify(widgets));
-            }
-        }
-
-        // Функции для Счетчика
-        function updateCounter(id, delta) {
-            const widget = widgets.find(w => w.id === id);
-            if (widget) {
-                widget.data.count = Math.max(0, widget.data.count + delta);
-                saveAndRender();
-            }
-        }
-        function resetCounter(id) {
-            const widget = widgets.find(w => w.id === id);
-            if (widget) {
-                widget.data.count = 0;
-                saveAndRender();
-            }
-        }
-
-        // Функции для Накоплений
-        function updateSavings(id, key, val) {
-            const widget = widgets.find(w => w.id === id);
-            if (widget) {
-                widget.data[key] = parseFloat(val) || 0;
-                saveAndRender();
-            }
-        }
-
-        // Функции для Задач
-        function addTaskItem(id) {
-            const widget = widgets.find(w => w.id === id);
-            if (widget) {
-                widget.data.push({ text: 'Новая задача', done: false });
-                saveAndRender();
-            }
-        }
-        function toggleTask(id, index) {
-            const widget = widgets.find(w => w.id === id);
-            if (widget) {
-                widget.data[index].done = !widget.data[index].done;
-                saveAndRender();
-            }
-        }
-        function updateTaskText(id, index, text) {
-            const widget = widgets.find(w => w.id === id);
-            if (widget) {
-                widget.data[index].text = text;
-                localStorage.setItem('user_widgets', JSON.stringify(widgets));
-            }
-        }
-        function removeTask(id, index) {
-            const widget = widgets.find(w => w.id === id);
-            if (widget) {
-                widget.data.splice(index, 1);
-                saveAndRender();
-            }
-        }
-
-        // Функции для Дневника
-        function updateDiary(id, text) {
-            const widget = widgets.find(w => w.id === id);
-            if (widget) {
-                widget.data.text = text;
-                localStorage.setItem('user_widgets', JSON.stringify(widgets));
-            }
-        }
-    </script>
+    // Логика Дневника
+    function updateDiary(id, val) {
+      const widget = widgets.find(w => w.id === id);
+      if (widget) {
+        widget.data.text = val;
+        localStorage.setItem('rebirth_widgets', JSON.stringify(widgets));
+      }
+    }
+  </script>
 </body>
 </html>
