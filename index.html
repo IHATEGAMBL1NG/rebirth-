@@ -39,6 +39,63 @@
       min-height: 100vh;
     }
 
+    /* Экран входа */
+    #authScreen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 80vh;
+    }
+
+    .auth-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+
+    .auth-card h2 {
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .auth-card p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+
+    .auth-input {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      font-size: 0.9rem;
+    }
+
+    .auth-input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    .auth-error {
+      color: var(--danger-color);
+      font-size: 0.8rem;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* Дашборд скрыт до входа */
+    #dashboardScreen {
+      display: none;
+    }
+
     header {
       display: flex;
       justify-content: space-between;
@@ -58,6 +115,12 @@
     .subtitle {
       font-size: 0.85rem;
       color: var(--text-muted);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .sync-status {
@@ -152,10 +215,15 @@
       background-color: var(--accent-color);
       color: #ffffff;
       border: none;
+      width: 100%;
     }
 
     button.primary:hover {
       background-color: var(--accent-hover);
+    }
+
+    .btn-group button.primary {
+      width: auto;
     }
 
     button.danger {
@@ -261,101 +329,126 @@
 </head>
 <body>
 
-  <header>
-    <div>
-      <h1>REBOOT</h1>
-      <div class="subtitle">Личная система трекинга и трансформации</div>
-    </div>
-    <div id="syncStatus" class="sync-status">Подключение...</div>
-  </header>
+  <!-- Экран авторизации -->
+  <div id="authScreen">
+    <div class="auth-card">
+      <h2>REBOOT</h2>
+      <p>Личный доступ к системе</p>
+      
+      <input type="email" id="emailInput" class="auth-input" placeholder="Ваша почта (Email)">
+      <input type="password" id="passwordInput" class="auth-input" placeholder="Пароль">
+      
+      <div id="authError" class="auth-error"></div>
 
-  <div class="grid">
-    <!-- Дни без ставок -->
-    <div class="card">
-      <div>
-        <div class="card-title">Чистые дни</div>
-        <div class="metric-value" id="cleanDays">0</div>
-        <div class="metric-desc">Дней без казино и БК</div>
-      </div>
-      <div class="btn-group">
-        <button class="primary" onclick="addCleanDay()">+1 День</button>
-        <button class="danger" onclick="resetCleanDays()">Срыв</button>
-      </div>
-    </div>
-
-    <!-- Цель на Екб -->
-    <div class="card">
-      <div>
-        <div class="card-title">Цель: Екб</div>
-        <div class="metric-value" id="savingsValue">0 ₽</div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="savingsProgress"></div>
-        </div>
-        <div class="metric-desc" id="shiftsCount">Смен отработано: 0 (Цель: 120 000 ₽)</div>
-      </div>
-      <div class="btn-group">
-        <button class="primary" onclick="addShift()">+1 Смена</button>
-        <button onclick="removeShift()">-1</button>
-      </div>
-    </div>
-
-    <!-- Водный баланс -->
-    <div class="card">
-      <div>
-        <div class="card-title">Водный баланс</div>
-        <div class="metric-desc">Цель: 8 стаканов в день</div>
-        <div class="water-tracker" id="waterTracker">
-          <div class="water-drop" onclick="toggleWater(0)"></div>
-          <div class="water-drop" onclick="toggleWater(1)"></div>
-          <div class="water-drop" onclick="toggleWater(2)"></div>
-          <div class="water-drop" onclick="toggleWater(3)"></div>
-          <div class="water-drop" onclick="toggleWater(4)"></div>
-          <div class="water-drop" onclick="toggleWater(5)"></div>
-          <div class="water-drop" onclick="toggleWater(6)"></div>
-          <div class="water-drop" onclick="toggleWater(7)"></div>
-        </div>
-      </div>
-      <div style="margin-top: 16px;">
-        <button onclick="resetWater()">Сбросить воду</button>
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <button class="primary" onclick="login()">Войти</button>
+        <button style="width: 100%;" onclick="register()">Регистрация</button>
       </div>
     </div>
   </div>
 
-  <!-- Чек-лист привычек -->
-  <div class="journal-section">
-    <div class="card-title">Привычки на сегодня</div>
-    <ul class="habits-list">
-      <li class="habit-item">
-        <input type="checkbox" id="h1" onchange="saveHabits()">
-        <label for="h1">Стакан воды после пробуждения</label>
-      </li>
-      <li class="habit-item">
-        <input type="checkbox" id="h2" onchange="saveHabits()">
-        <label for="h2">Без кофеина натощак</label>
-      </li>
-      <li class="habit-item">
-        <input type="checkbox" id="h3" onchange="saveHabits()">
-        <label for="h3">Зарядка / растяжка 10 минут</label>
-      </li>
-      <li class="habit-item">
-        <input type="checkbox" id="h4" onchange="saveHabits()">
-        <label for="h4">Без захода в БК / казино</label>
-      </li>
-    </ul>
-  </div>
+  <!-- Главный Дашборд (скрыт до авторизации) -->
+  <div id="dashboardScreen">
+    <header>
+      <div>
+        <h1>REBOOT</h1>
+        <div class="subtitle">Личная система трекинга и трансформации</div>
+      </div>
+      <div class="header-right">
+        <div id="syncStatus" class="sync-status">Подключение...</div>
+        <button style="padding: 4px 10px; font-size: 0.8rem;" onclick="logout()">Выйти</button>
+      </div>
+    </header>
 
-  <!-- Дневник -->
-  <div class="journal-section">
-    <div class="card-title">Дневник & Мысли</div>
-    <textarea id="journalInput" placeholder="Как прошла смена? Что на уме? Напиши пару строк..."></textarea>
-    <button class="primary" onclick="addJournalEntry()">Сохранить запись</button>
-    
-    <div id="journalEntries" style="margin-top: 16px;"></div>
+    <div class="grid">
+      <!-- Дни без ставок -->
+      <div class="card">
+        <div>
+          <div class="card-title">Чистые дни</div>
+          <div class="metric-value" id="cleanDays">0</div>
+          <div class="metric-desc">Дней без казино и БК</div>
+        </div>
+        <div class="btn-group">
+          <button class="primary" onclick="addCleanDay()">+1 День</button>
+          <button class="danger" onclick="resetCleanDays()">Срыв</button>
+        </div>
+      </div>
+
+      <!-- Цель на Екб -->
+      <div class="card">
+        <div>
+          <div class="card-title">Цель: Екб</div>
+          <div class="metric-value" id="savingsValue">0 ₽</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="savingsProgress"></div>
+          </div>
+          <div class="metric-desc" id="shiftsCount">Смен отработано: 0 (Цель: 120 000 ₽)</div>
+        </div>
+        <div class="btn-group">
+          <button class="primary" onclick="addShift()">+1 Смена</button>
+          <button onclick="removeShift()">-1</button>
+        </div>
+      </div>
+
+      <!-- Водный баланс -->
+      <div class="card">
+        <div>
+          <div class="card-title">Водный баланс</div>
+          <div class="metric-desc">Цель: 8 стаканов в день</div>
+          <div class="water-tracker" id="waterTracker">
+            <div class="water-drop" onclick="toggleWater(0)"></div>
+            <div class="water-drop" onclick="toggleWater(1)"></div>
+            <div class="water-drop" onclick="toggleWater(2)"></div>
+            <div class="water-drop" onclick="toggleWater(3)"></div>
+            <div class="water-drop" onclick="toggleWater(4)"></div>
+            <div class="water-drop" onclick="toggleWater(5)"></div>
+            <div class="water-drop" onclick="toggleWater(6)"></div>
+            <div class="water-drop" onclick="toggleWater(7)"></div>
+          </div>
+        </div>
+        <div style="margin-top: 16px;">
+          <button onclick="resetWater()">Сбросить воду</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Чек-лист привычек -->
+    <div class="journal-section">
+      <div class="card-title">Привычки на сегодня</div>
+      <ul class="habits-list">
+        <li class="habit-item">
+          <input type="checkbox" id="h1" onchange="saveHabits()">
+          <label for="h1">Стакан воды после пробуждения</label>
+        </li>
+        <li class="habit-item">
+          <input type="checkbox" id="h2" onchange="saveHabits()">
+          <label for="h2">Без кофеина натощак</label>
+        </li>
+        <li class="habit-item">
+          <input type="checkbox" id="h3" onchange="saveHabits()">
+          <label for="h3">Зарядка / растяжка 10 минут</label>
+        </li>
+        <li class="habit-item">
+          <input type="checkbox" id="h4" onchange="saveHabits()">
+          <label for="h4">Без захода в БК / казино</label>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Дневник -->
+    <div class="journal-section">
+      <div class="card-title">Дневник & Мысли</div>
+      <textarea id="journalInput" placeholder="Как прошла смена? Что на уме? Напиши пару строк..."></textarea>
+      <button class="primary" style="width: auto;" onclick="addJournalEntry()">Сохранить запись</button>
+      
+      <div id="journalEntries" style="margin-top: 16px;"></div>
+    </div>
   </div>
 
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -369,9 +462,11 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
-    const docRef = doc(db, "user_data", "main_dashboard");
 
+    let currentUser = null;
+    let docUnsubscribe = null;
     let state = {
       cleanDays: 0,
       shifts: 0,
@@ -380,27 +475,81 @@
       journal: []
     };
 
+    const authScreen = document.getElementById('authScreen');
+    const dashboardScreen = document.getElementById('dashboardScreen');
+    const authError = document.getElementById('authError');
     const syncStatusEl = document.getElementById('syncStatus');
 
-    // Синхронизация в реальном времени с облаком
-    onSnapshot(docRef, (snapshot) => {
-      if (snapshot.exists()) {
-        state = snapshot.data();
-        render();
-        syncStatusEl.innerText = "● Синхронизировано";
-        syncStatusEl.classList.add('online');
+    // Следим за статусом входа
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        authScreen.style.display = 'none';
+        dashboardScreen.style.display = 'block';
+        subscribeToData();
       } else {
-        saveState();
+        currentUser = null;
+        if (docUnsubscribe) docUnsubscribe();
+        authScreen.style.display = 'flex';
+        dashboardScreen.style.display = 'none';
       }
-    }, (error) => {
-      console.error("Ошибка синхронизации:", error);
-      syncStatusEl.innerText = "Ошибка подключения";
-      syncStatusEl.classList.remove('online');
     });
 
+    // Регистрация
+    window.register = async () => {
+      const email = document.getElementById('emailInput').value;
+      const password = document.getElementById('passwordInput').value;
+      authError.style.display = 'none';
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        authError.innerText = "Ошибка: " + err.message;
+        authError.style.display = 'block';
+      }
+    };
+
+    // Вход
+    window.login = async () => {
+      const email = document.getElementById('emailInput').value;
+      const password = document.getElementById('passwordInput').value;
+      authError.style.display = 'none';
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        authError.innerText = "Ошибка входа: проверьте email/пароль";
+        authError.style.display = 'block';
+      }
+    };
+
+    // Выход
+    window.logout = () => {
+      signOut(auth);
+    };
+
+    // Слушатель данных из Firestore (привязан к UID юзера)
+    function subscribeToData() {
+      if (!currentUser) return;
+      const docRef = doc(db, "users", currentUser.uid);
+
+      docUnsubscribe = onSnapshot(docRef, (snapshot) => {
+        if (snapshot.exists()) {
+          state = snapshot.data();
+          render();
+          syncStatusEl.innerText = "● Синхронизировано";
+          syncStatusEl.classList.add('online');
+        } else {
+          saveState();
+        }
+      }, (error) => {
+        console.error("Ошибка базы:", error);
+      });
+    }
+
     async function saveState() {
+      if (!currentUser) return;
       syncStatusEl.innerText = "Сохранение...";
       try {
+        const docRef = doc(db, "users", currentUser.uid);
         await setDoc(docRef, state);
         syncStatusEl.innerText = "● Синхронизировано";
         syncStatusEl.classList.add('online');
@@ -451,7 +600,6 @@
       }
     }
 
-    // Экспортируем функции в глобальную область
     window.addCleanDay = () => { state.cleanDays = (state.cleanDays || 0) + 1; saveState(); };
     window.resetCleanDays = () => { if (confirm('Сбросить счетчик дней без ставок?')) { state.cleanDays = 0; saveState(); } };
     window.addShift = () => { state.shifts = (state.shifts || 0) + 1; saveState(); };
