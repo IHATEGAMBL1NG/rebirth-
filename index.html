@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REBOOT // Personal Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #1e1f22;
+      --card-bg: #2b2d31;
+      --card-hover: #313338;
+      --border-color: #3f4248;
+      --text-main: #dbdee1;
+      --text-muted: #949ba4;
+      --accent-color: #5865f2;
+      --accent-hover: #4752c4;
+      --success-color: #23a55a;
+      --danger-color: #f23f43;
+      --warning-color: #f0b232;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 16px;
+      max-width: 900px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .metric-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background-color: var(--bg-color);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--accent-color);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    button {
+      background-color: var(--card-hover);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background-color: var(--border-color);
+      color: #ffffff;
+    }
+
+    button.primary {
+      background-color: var(--accent-color);
+      color: #ffffff;
+      border: none;
+    }
+
+    button.primary:hover {
+      background-color: var(--accent-hover);
+    }
+
+    button.danger {
+      background-color: rgba(242, 63, 67, 0.1);
+      color: var(--danger-color);
+      border: 1px solid rgba(242, 63, 67, 0.3);
+    }
+
+    button.danger:hover {
+      background-color: var(--danger-color);
+      color: #ffffff;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .habits-list {
+      list-style: none;
+    }
+
+    .habit-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .habit-item:last-child {
+      border-bottom: none;
+    }
+
+    .habit-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-color);
+      margin-right: 12px;
+      cursor: pointer;
+    }
+
+    .water-tracker {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .water-drop {
+      flex: 1;
+      height: 32px;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .water-drop.active {
+      background-color: #3ba55d;
+      border-color: #3ba55d;
+    }
+
+    .journal-section {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 24px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 12px;
+      font-size: 0.95rem;
+      resize: vertical;
+      margin-bottom: 12px;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    .journal-entry {
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .entry-date {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .data-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>REBOOT</h1>
+      <div class="subtitle">Личная система трекинга и трансформации</div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- Дни без ставок -->
+    <div class="card">
+      <div>
+        <div class="card-title">Чистые дни</div>
+        <div class="metric-value" id="cleanDays">0</div>
+        <div class="metric-desc">Дней без казино и БК</div>
+      </div>
+      <div class="btn-group">
+        <button class="primary" onclick="addCleanDay()">+1 День</button>
+        <button class="danger" onclick="resetCleanDays()">Срыв</button>
+      </div>
+    </div>
+
+    <!-- Цель на Екб -->
+    <div class="card">
+      <div>
+        <div class="card-title">Цель: Екб</div>
+        <div class="metric-value" id="savingsValue">0 ₽</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="savingsProgress"></div>
+        </div>
+        <div class="metric-desc" id="shiftsCount">Смен отработано: 0 (Цель: 120 000 ₽)</div>
+      </div>
+      <div class="btn-group">
+        <button class="primary" onclick="addShift()">+1 Смена</button>
+        <button onclick="removeShift()">-1</button>
+      </div>
+    </div>
+
+    <!-- Водный баланс -->
+    <div class="card">
+      <div>
+        <div class="card-title">Водный баланс</div>
+        <div class="metric-desc">Цель: 8 стаканов в день</div>
+        <div class="water-tracker" id="waterTracker">
+          <div class="water-drop" onclick="toggleWater(0)"></div>
+          <div class="water-drop" onclick="toggleWater(1)"></div>
+          <div class="water-drop" onclick="toggleWater(2)"></div>
+          <div class="water-drop" onclick="toggleWater(3)"></div>
+          <div class="water-drop" onclick="toggleWater(4)"></div>
+          <div class="water-drop" onclick="toggleWater(5)"></div>
+          <div class="water-drop" onclick="toggleWater(6)"></div>
+          <div class="water-drop" onclick="toggleWater(7)"></div>
+        </div>
+      </div>
+      <div style="margin-top: 16px;">
+        <button onclick="resetWater()">Сбросить воду</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Чек-лист привычек -->
+  <div class="journal-section">
+    <div class="card-title">Привычки на сегодня</div>
+    <ul class="habits-list">
+      <li class="habit-item">
+        <input type="checkbox" id="h1" onchange="saveHabits()">
+        <label for="h1">Стакан воды после пробуждения</label>
+      </li>
+      <li class="habit-item">
+        <input type="checkbox" id="h2" onchange="saveHabits()">
+        <label for="h2">Без кофеина натощак</label>
+      </li>
+      <li class="habit-item">
+        <input type="checkbox" id="h3" onchange="saveHabits()">
+        <label for="h3">Зарядка / растяжка 10 минут</label>
+      </li>
+      <li class="habit-item">
+        <input type="checkbox" id="h4" onchange="saveHabits()">
+        <label for="h4">Без захода в БК / казино</label>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Дневник -->
+  <div class="journal-section">
+    <div class="card-title">Дневник & Мысли</div>
+    <textarea id="journalInput" placeholder="Как прошла смена? Что на уме? Напиши пару строк..."></textarea>
+    <button class="primary" onclick="addJournalEntry()">Сохранить запись</button>
+    
+    <div id="journalEntries" style="margin-top: 16px;"></div>
+  </div>
+
+  <!-- Экспорт / Импорт -->
+  <div class="data-actions">
+    <button onclick="exportData()">Экспорт (JSON)</button>
+    <button onclick="importData()">Импорт</button>
+    <input type="file" id="importFile" style="display: none;" onchange="processImport(event)">
+  </div>
+
+  <script>
+    let state = {
+      cleanDays: 0,
+      shifts: 0,
+      water: [false, false, false, false, false, false, false, false],
+      habits: [false, false, false, false],
+      journal: []
+    };
+
+    function loadState() {
+      const saved = localStorage.getItem('reboot_state');
+      if (saved) {
+        state = JSON.parse(saved);
+      }
+      render();
+    }
+
+    function saveState() {
+      localStorage.setItem('reboot_state', JSON.stringify(state));
+      render();
+    }
+
+    function render() {
+      document.getElementById('cleanDays').innerText = state.cleanDays;
+      
+      const savings = state.shifts * 6000;
+      document.getElementById('savingsValue').innerText = savings.toLocaleString() + ' ₽';
+      document.getElementById('shiftsCount').innerText = `Смен отработано: ${state.shifts} (Цель: 120 000 ₽)`;
+      
+      const progressPercent = Math.min(100, (savings / 120000) * 100);
+      document.getElementById('savingsProgress').style.width = progressPercent + '%';
+
+      // Water
+      const drops = document.querySelectorAll('.water-drop');
+      drops.forEach((drop, index) => {
+        if (state.water[index]) {
+          drop.classList.add('active');
+        } else {
+          drop.classList.remove('active');
+        }
+      });
+
+      // Habits
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`h${i+1}`).checked = state.habits[i] || false;
+      }
+
+      // Journal
+      const journalContainer = document.getElementById('journalEntries');
+      journalContainer.innerHTML = '';
+      state.journal.forEach((entry, index) => {
+        const div = document.createElement('div');
+        div.className = 'journal-entry';
+        div.innerHTML = `
+          <div class="entry-date">${entry.date}</div>
+          <div>${entry.text}</div>
+        `;
+        journalContainer.appendChild(div);
+      });
+    }
+
+    function addCleanDay() {
+      state.cleanDays++;
+      saveState();
+    }
+
+    function resetCleanDays() {
+      if (confirm('Сбросить счетчик дней без ставок?')) {
+        state.cleanDays = 0;
+        saveState();
+      }
+    }
+
+    function addShift() {
+      state.shifts++;
+      saveState();
+    }
+
+    function removeShift() {
+      if (state.shifts > 0) {
+        state.shifts--;
+        saveState();
+      }
+    }
+
+    function toggleWater(index) {
+      state.water[index] = !state.water[index];
+      saveState();
+    }
+
+    function resetWater() {
+      state.water = [false, false, false, false, false, false, false, false];
+      saveState();
+    }
+
+    function saveHabits() {
+      for (let i = 0; i < 4; i++) {
+        state.habits[i] = document.getElementById(`h${i+1}`).checked;
+      }
+      saveState();
+    }
+
+    function addJournalEntry() {
+      const text = document.getElementById('journalInput').value.trim();
+      if (!text) return;
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('ru-RU') + ' ' + now.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
+
+      state.journal.unshift({ date: dateStr, text: text });
+      document.getElementById('journalInput').value = '';
+      saveState();
+    }
+
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `reboot_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importData() {
+      document.getElementById('importFile').click();
+    }
+
+    function processImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          state = JSON.parse(e.target.result);
+          saveState();
+          alert('Данные успешно импортированы!');
+        } catch (err) {
+          alert('Ошибка при чтении файла');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Инициализация
+    loadState();
+  </script>
+</body>
+</html>
