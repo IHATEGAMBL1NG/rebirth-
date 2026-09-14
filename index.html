@@ -528,10 +528,9 @@
         await auth.signInWithEmailAndPassword(email, password);
       } catch (error) {
         console.error("Login Error:", error.code);
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-          loginError.innerText = 'пользователь не найден';
-        } else if (error.code === 'auth/wrong-password') {
-          loginError.innerText = 'неправильный пароль';
+        // Объединили ошибки в одну универсальную для безопасности и удобства
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          loginError.innerText = 'неверный логин или пароль';
         } else {
           loginError.innerText = 'ошибка входа в аккаунт';
         }
