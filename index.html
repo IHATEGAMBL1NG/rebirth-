@@ -190,6 +190,64 @@
       color: var(--success-color);
     }
 
+    /* Профиль в шапке со скрытым меню выхода */
+    .user-profile-menu-container {
+      position: relative;
+    }
+
+    .user-profile-btn {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.2s;
+    }
+
+    .user-profile-btn:hover {
+      background-color: var(--card-hover);
+    }
+
+    .user-dropdown-box {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 40px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+      z-index: 20;
+      min-width: 140px;
+      overflow: hidden;
+    }
+
+    .user-dropdown-box.show {
+      display: block;
+    }
+
+    .user-dropdown-box button {
+      width: 100%;
+      background: none;
+      border: none;
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: var(--danger-color);
+      cursor: pointer;
+      border-radius: 0;
+    }
+
+    .user-dropdown-box button:hover {
+      background-color: rgba(242, 63, 67, 0.1);
+    }
+
     .page-layout {
       display: grid;
       grid-template-columns: 1fr;
@@ -352,6 +410,55 @@
       white-space: pre-wrap;
     }
 
+    /* Кнопка "читать дальше..." */
+    .read-more-btn {
+      background: none;
+      border: none;
+      color: var(--accent-color);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0;
+      margin-top: 4px;
+      text-align: left;
+    }
+
+    .read-more-btn:hover {
+      text-decoration: underline;
+      color: var(--accent-hover);
+    }
+
+    /* Блок пагинации (листы) */
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .page-btn {
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .page-btn.active {
+      background-color: var(--accent-color);
+      color: #ffffff;
+      border-color: var(--accent-color);
+      font-weight: 600;
+    }
+
+    .page-btn:hover:not(.active) {
+      background-color: var(--card-hover);
+      color: #ffffff;
+    }
+
     /* Кнопка с тремя точками */
     .tweet-menu-btn {
       background: none;
@@ -369,7 +476,7 @@
       background-color: var(--card-hover);
     }
 
-    /* Выпадающее меню (поповер) */
+    /* Выпадающее меню заметок */
     .tweet-dropdown-menu {
       display: none;
       position: absolute;
@@ -636,7 +743,17 @@
       </div>
       <div class="header-right">
         <div class="sync-status" id="syncStatus">● Синхронизировано</div>
-        <button style="padding: 6px 12px;" onclick="logout()">Выйти</button>
+        
+        <!-- Профиль пользователя с выпадающим меню выхода -->
+        <div class="user-profile-menu-container">
+          <button class="user-profile-btn" onclick="toggleUserProfileMenu(event)">
+            <span id="userNameDisplay">Профиль</span>
+            <span style="font-size: 0.7rem;">▼</span>
+          </button>
+          <div id="userDropdownMenu" class="user-dropdown-box">
+            <button onclick="logout()">Выйти</button>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -671,6 +788,9 @@
           <div class="twitter-divider" id="tweetsDivider" style="display: none;"></div>
 
           <div id="twitterTweetsList" class="tweets-scroll-list"></div>
+          
+          <!-- Пагинация (листы) -->
+          <div id="paginationContainer" class="pagination-container" style="display: none;"></div>
         </div>
       </div>
 
@@ -694,13 +814,17 @@
 
     let currentUser = null;
     let widgets = [];
+    let currentTweetPage = 1;
+    const tweetsPerPage = 5;
+    const charLimit = 120; // Ограничение символов для скрытия под "читать дальше"
+    let expandedTweets = {}; // Хранит состояние раскрытых заметок
 
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         currentUser = user;
         document.getElementById('authScreen').style.display = 'none';
         document.getElementById('dashboardScreen').style.display = 'block';
-        await loadUserWidgets();
+        await loadUserData();
       } else {
         currentUser = null;
         widgets = [];
@@ -789,9 +913,18 @@
       auth.signOut();
     }
 
-    async function loadUserWidgets() {
+    async function loadUserData() {
       if (!currentUser) return;
       try {
+        // Загружаем имя пользователя
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        if (userDoc.exists && userDoc.data().name) {
+          document.getElementById('userNameDisplay').innerText = userDoc.data().name;
+        } else {
+          document.getElementById('userNameDisplay').innerText = currentUser.email.split('@')[0];
+        }
+
+        // Загружаем виджеты и заметки
         const doc = await db.collection('users').doc(currentUser.uid).collection('data').doc('widgets').get();
         if (doc.exists) {
           widgets = doc.data().list || [];
@@ -800,7 +933,7 @@
         }
         render();
       } catch (e) {
-        console.error("Error loading widgets:", e);
+        console.error("Error loading user data:", e);
       }
     }
 
@@ -819,7 +952,7 @@
         syncStatus.innerText = '● Синхронизировано';
         syncStatus.style.color = 'var(--success-color)';
       } catch (e) {
-        console.error("Error saving widgets:", e);
+        console.error("Error saving data:", e);
         syncStatus.innerText = '● Ошибка сохранения';
         syncStatus.style.color = 'var(--danger-color)';
       }
@@ -850,7 +983,6 @@
       if (!text) return;
 
       const now = new Date();
-      // Формат с секундами: ДД.ММ в ЧЧ:ММ:СС
       const timeString = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' в ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
       const newTweet = {
@@ -862,6 +994,7 @@
 
       widgets.unshift(newTweet);
       input.value = '';
+      currentTweetPage = 1; // Возвращаемся на первую страницу при отправке новой заметки
       saveAndRender();
     }
 
@@ -883,30 +1016,47 @@
 
     function deleteWidget(id) {
       widgets = widgets.filter(w => w.id !== id);
+      // Корректируем страницу, если после удаления текущая страница стала пустой
+      const diaryWidgets = widgets.filter(w => w.type === 'diary');
+      const totalPages = Math.ceil(diaryWidgets.length / tweetsPerPage) || 1;
+      if (currentTweetPage > totalPages) {
+        currentTweetPage = totalPages;
+      }
       saveAndRender();
     }
 
-    // Управление выпадающим меню по клику на 3 точки
+    // Управление выпадающим меню профиля в шапке
+    function toggleUserProfileMenu(e) {
+      e.stopPropagation();
+      closeAllMenus();
+      const menu = document.getElementById('userDropdownMenu');
+      menu.classList.toggle('show');
+    }
+
+    // Управление выпадающим меню заметки (три точки)
     function toggleTweetMenu(event, id) {
       event.stopPropagation();
-      // Закрываем все остальные открытые меню
-      document.querySelectorAll('.tweet-dropdown-menu').forEach(menu => {
-        if (menu.id !== 'menu-' + id) menu.classList.remove('show');
-      });
+      closeAllMenus();
       const menu = document.getElementById('menu-' + id);
       if (menu) {
         menu.classList.toggle('show');
       }
     }
 
-    // Закрытие меню при клике в любое другое место страницы
+    function closeAllMenus() {
+      document.querySelectorAll('.user-dropdown-box').forEach(m => m.classList.remove('show'));
+      document.querySelectorAll('.tweet-dropdown-menu').forEach(m => m.classList.remove('show'));
+    }
+
     window.addEventListener('click', () => {
-      document.querySelectorAll('.tweet-dropdown-menu').forEach(menu => {
-        menu.classList.remove('show');
-      });
+      closeAllMenus();
     });
 
-    // Перевод конкретной заметки в режим редактирования
+    function toggleReadMore(id) {
+      expandedTweets[id] = !expandedTweets[id];
+      render();
+    }
+
     function startEditTweet(id) {
       const itemNode = document.getElementById('tweet-item-' + id);
       if (!itemNode) return;
@@ -943,9 +1093,11 @@
       const mainGrid = document.getElementById('mainDashboard');
       const twitterTweetsList = document.getElementById('twitterTweetsList');
       const tweetsDivider = document.getElementById('tweetsDivider');
+      const paginationContainer = document.getElementById('paginationContainer');
 
       mainGrid.innerHTML = '';
       twitterTweetsList.innerHTML = '';
+      paginationContainer.innerHTML = '';
 
       const diaryWidgets = widgets.filter(w => w.type === 'diary');
       const otherWidgets = widgets.filter(w => w.type !== 'diary');
@@ -954,9 +1106,33 @@
         tweetsDivider.style.display = 'block';
       } else {
         tweetsDivider.style.display = 'none';
+        paginationContainer.style.display = 'none';
       }
 
-      diaryWidgets.forEach(w => {
+      // Пагинация для заметок (максимум 5 на странице)
+      const totalPages = Math.ceil(diaryWidgets.length / tweetsPerPage);
+      if (currentTweetPage > totalPages && totalPages > 0) {
+        currentTweetPage = totalPages;
+      }
+
+      const startIndex = (currentTweetPage - 1) * tweetsPerPage;
+      const currentDiaryPageItems = diaryWidgets.slice(startIndex, startIndex + tweetsPerPage);
+
+      currentDiaryPageItems.forEach(w => {
+        const text = w.data.text || '';
+        const isLong = text.length > charLimit;
+        const isExpanded = expandedTweets[w.id];
+
+        let displayHtmlText = text;
+        let readMoreBtnHtml = '';
+
+        if (isLong && !isExpanded) {
+          displayHtmlText = text.substring(0, charLimit) + '...';
+          readMoreBtnHtml = `<button class="read-more-btn" onclick="toggleReadMore(${w.id})">читать дальше...</button>`;
+        } else if (isLong && isExpanded) {
+          readMoreBtnHtml = `<button class="read-more-btn" onclick="toggleReadMore(${w.id})">скрыть</button>`;
+        }
+
         const tweetItem = document.createElement('div');
         tweetItem.className = 'tweet-item';
         tweetItem.id = 'tweet-item-' + w.id;
@@ -972,11 +1148,30 @@
               </div>
             </div>
           </div>
-          <div class="tweet-text-content">${w.data.text || ''}</div>
+          <div class="tweet-text-content">${displayHtmlText}</div>
+          ${readMoreBtnHtml}
         `;
         twitterTweetsList.appendChild(tweetItem);
       });
 
+      // Рендерим кнопки пагинации (листы 1, 2, 3...)
+      if (totalPages > 1) {
+        paginationContainer.style.display = 'flex';
+        for (let i = 1; i <= totalPages; i++) {
+          const pageBtn = document.createElement('button');
+          pageBtn.className = `page-btn ${i === currentTweetPage ? 'active' : ''}`;
+          pageBtn.innerText = i;
+          pageBtn.onclick = () => {
+            currentTweetPage = i;
+            render();
+          };
+          paginationContainer.appendChild(pageBtn);
+        }
+      } else {
+        paginationContainer.style.display = 'none';
+      }
+
+      // Рендеринг остальных виджетов (счетчик, накопления, задачи)
       otherWidgets.forEach(w => {
         const card = document.createElement('div');
         card.className = 'card';
