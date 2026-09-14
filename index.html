@@ -580,7 +580,7 @@
       grid-template-columns: repeat(4, 1fr);
       gap: 6px;
       text-align: center;
-      margin-bottom: 14px;
+      margin-bottom: 6px;
     }
 
     .timer-box {
@@ -722,9 +722,66 @@
       text-decoration: line-through;
       color: var(--text-muted);
     }
+
+    /* Модальное окно подтверждения удаления */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 22px;
+      width: 100%;
+      max-width: 320px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .modal-text {
+      font-size: 0.9rem;
+      color: var(--text-main);
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Модальное окно подтверждения удаления -->
+  <div id="deleteModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-text">Внимание, после удаления восстановить будет невозможно</div>
+      <div class="modal-buttons">
+        <button onclick="closeDeleteModal()">Отмена</button>
+        <button class="danger" id="confirmDeleteBtn">Удалить</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Экран Входа / Регистрации -->
   <div id="authScreen">
@@ -845,7 +902,8 @@
     const tweetsPerPage = 5;
     const charLimit = 120;
     let expandedTweets = {};
-    let timerInterval = null; // Интервал для тикания таймеров
+    let timerInterval = null;
+    let pendingDeleteId = null; // ID элемента, который ожидаем удалить
 
     auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -992,7 +1050,6 @@
 
       if (type === 'counter') {
         defaultTitle = 'Счетчик времени';
-        // Если счетчик новый, ставим статус конфигурации
         defaultData = { configured: false, startTime: null };
       } else if (type === 'savings') {
         defaultTitle = 'Финансовая цель';
@@ -1011,14 +1068,6 @@
       
       widgets.push(newWidget);
       saveAndRender();
-    }
-
-    function startCounterConfig(id) {
-      const widget = widgets.find(w => w.id === id);
-      if (widget) {
-        widget.data.configured = false;
-        render();
-      }
     }
 
     function saveCounterConfig(id) {
@@ -1046,7 +1095,6 @@
     function startGlobalTimer() {
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(() => {
-        // Обновляем только таймеры на экране без полной перерисовки, чтобы не сбивать фокус полей ввода
         const counterWidgets = widgets.filter(w => w.type === 'counter' && w.data && w.data.configured);
         counterWidgets.forEach(w => {
           const timerNode = document.getElementById('timer-grid-' + w.id);
@@ -1101,15 +1149,30 @@
       saveAndRender();
     }
 
-    function deleteWidget(id) {
-      widgets = widgets.filter(w => w.id !== id);
-      const diaryWidgets = widgets.filter(w => w.type === 'diary');
-      const totalPages = Math.ceil(diaryWidgets.length / tweetsPerPage) || 1;
-      if (currentTweetPage > totalPages) {
-        currentTweetPage = totalPages;
-      }
-      saveAndRender();
+    // Управление модальным окном подтверждения удаления
+    function promptDelete(id) {
+      closeAllMenus();
+      pendingDeleteId = id;
+      document.getElementById('deleteModal').classList.add('show');
     }
+
+    function closeDeleteModal() {
+      pendingDeleteId = null;
+      document.getElementById('deleteModal').classList.remove('show');
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+      if (pendingDeleteId !== null) {
+        widgets = widgets.filter(w => w.id !== pendingDeleteId);
+        const diaryWidgets = widgets.filter(w => w.type === 'diary');
+        const totalPages = Math.ceil(diaryWidgets.length / tweetsPerPage) || 1;
+        if (currentTweetPage > totalPages) {
+          currentTweetPage = totalPages;
+        }
+        closeDeleteModal();
+        saveAndRender();
+      }
+    });
 
     function toggleUserProfileMenu(e) {
       e.stopPropagation();
@@ -1227,7 +1290,7 @@
               <button class="tweet-menu-btn" onclick="toggleTweetMenu(event, ${w.id})" title="Опции">•••</button>
               <div id="menu-${w.id}" class="tweet-dropdown-menu">
                 <button class="menu-item-edit" onclick="startEditTweet(${w.id})">Изменить</button>
-                <button class="menu-item-delete" onclick="deleteWidget(${w.id})">Удалить</button>
+                <button class="menu-item-delete" onclick="promptDelete(${w.id})">Удалить</button>
               </div>
             </div>
           </div>
@@ -1262,7 +1325,6 @@
 
         if (w.type === 'counter') {
           if (!w.data || !w.data.configured) {
-            // Окно настройки счетчика перед запуском
             const defaultDateTime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
             bodyHTML = `
               <div style="display: flex; flex-direction: column; gap: 10px; margin: 8px 0 14px 0;">
@@ -1276,7 +1338,7 @@
               </div>
             `;
           } else {
-            // Активный живой таймер с секундами
+            // Без кнопки «Изменить» внутри запущенного таймера, только чистые секунды
             bodyHTML = `
               <div class="counter-timer-grid" id="timer-grid-${w.id}">
                 <div class="timer-box">
@@ -1295,9 +1357,6 @@
                   <div class="timer-num" id="t-secs-${w.id}">00</div>
                   <div class="timer-label">секунд</div>
                 </div>
-              </div>
-              <div class="btn-group">
-                <button class="danger" onclick="startCounterConfig(${w.id})">Сбросить / Изменить</button>
               </div>
             `;
           }
@@ -1339,19 +1398,18 @@
           `;
         }
 
-        // Заголовок карточки рендерим только если счетчик уже запущен или это не счетчик
         const showTitleHeader = (w.type !== 'counter' || (w.data && w.data.configured));
 
         card.innerHTML = `
           ${showTitleHeader ? `
             <div class="card-header">
               <span class="card-title" contenteditable="true" onblur="updateTitle(${w.id}, this.innerText)">${w.title}</span>
-              <button class="btn-delete" onclick="deleteWidget(${w.id})">&times;</button>
+              <button class="btn-delete" onclick="promptDelete(${w.id})">&times;</button>
             </div>
           ` : `
             <div class="card-header">
               <span class="card-title">Настройка счетчика</span>
-              <button class="btn-delete" onclick="deleteWidget(${w.id})">&times;</button>
+              <button class="btn-delete" onclick="promptDelete(${w.id})">&times;</button>
             </div>
           `}
           ${bodyHTML}
