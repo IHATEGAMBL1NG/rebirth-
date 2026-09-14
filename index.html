@@ -60,6 +60,19 @@
       color: var(--text-muted);
     }
 
+    .sync-status {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--warning-color);
+    }
+
+    .sync-status.online {
+      color: var(--success-color);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -201,8 +214,8 @@
     }
 
     .water-drop.active {
-      background-color: #3ba55d;
-      border-color: #3ba55d;
+      background-color: #23a55a;
+      border-color: #23a55a;
     }
 
     .journal-section {
@@ -244,13 +257,6 @@
       color: var(--text-muted);
       margin-bottom: 6px;
     }
-
-    .data-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 20px;
-    }
   </style>
 </head>
 <body>
@@ -260,6 +266,7 @@
       <h1>REBOOT</h1>
       <div class="subtitle">Личная система трекинга и трансформации</div>
     </div>
+    <div id="syncStatus" class="sync-status">Подключение...</div>
   </header>
 
   <div class="grid">
@@ -346,14 +353,25 @@
     <div id="journalEntries" style="margin-top: 16px;"></div>
   </div>
 
-  <!-- Экспорт / Импорт -->
-  <div class="data-actions">
-    <button onclick="exportData()">Экспорт (JSON)</button>
-    <button onclick="importData()">Импорт</button>
-    <input type="file" id="importFile" style="display: none;" onchange="processImport(event)">
-  </div>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDEvtnKd0Sr7Y-yLg4lzJeOCT07oradrMc",
+      authDomain: "ihategambl1ng-rebirth.firebaseapp.com",
+      projectId: "ihategambl1ng-rebirth",
+      storageBucket: "ihategambl1ng-rebirth.firebasestorage.app",
+      messagingSenderId: "667356577739",
+      appId: "1:667356577739:web:12710a0312146e1f9a804e",
+      measurementId: "G-7P6W76YH92"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const docRef = doc(db, "user_data", "main_dashboard");
+
     let state = {
       cleanDays: 0,
       shifts: 0,
@@ -362,25 +380,42 @@
       journal: []
     };
 
-    function loadState() {
-      const saved = localStorage.getItem('reboot_state');
-      if (saved) {
-        state = JSON.parse(saved);
-      }
-      render();
-    }
+    const syncStatusEl = document.getElementById('syncStatus');
 
-    function saveState() {
-      localStorage.setItem('reboot_state', JSON.stringify(state));
-      render();
+    // Синхронизация в реальном времени с облаком
+    onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        state = snapshot.data();
+        render();
+        syncStatusEl.innerText = "● Синхронизировано";
+        syncStatusEl.classList.add('online');
+      } else {
+        saveState();
+      }
+    }, (error) => {
+      console.error("Ошибка синхронизации:", error);
+      syncStatusEl.innerText = "Ошибка подключения";
+      syncStatusEl.classList.remove('online');
+    });
+
+    async function saveState() {
+      syncStatusEl.innerText = "Сохранение...";
+      try {
+        await setDoc(docRef, state);
+        syncStatusEl.innerText = "● Синхронизировано";
+        syncStatusEl.classList.add('online');
+      } catch (e) {
+        console.error("Ошибка сохранения:", e);
+      }
     }
 
     function render() {
-      document.getElementById('cleanDays').innerText = state.cleanDays;
+      document.getElementById('cleanDays').innerText = state.cleanDays || 0;
       
-      const savings = state.shifts * 6000;
+      const shifts = state.shifts || 0;
+      const savings = shifts * 6000;
       document.getElementById('savingsValue').innerText = savings.toLocaleString() + ' ₽';
-      document.getElementById('shiftsCount').innerText = `Смен отработано: ${state.shifts} (Цель: 120 000 ₽)`;
+      document.getElementById('shiftsCount').innerText = `Смен отработано: ${shifts} (Цель: 120 000 ₽)`;
       
       const progressPercent = Math.min(100, (savings / 120000) * 100);
       document.getElementById('savingsProgress').style.width = progressPercent + '%';
@@ -388,7 +423,7 @@
       // Water
       const drops = document.querySelectorAll('.water-drop');
       drops.forEach((drop, index) => {
-        if (state.water[index]) {
+        if (state.water && state.water[index]) {
           drop.classList.add('active');
         } else {
           drop.classList.remove('active');
@@ -397,109 +432,49 @@
 
       // Habits
       for (let i = 0; i < 4; i++) {
-        document.getElementById(`h${i+1}`).checked = state.habits[i] || false;
+        document.getElementById(`h${i+1}`).checked = (state.habits && state.habits[i]) || false;
       }
 
       // Journal
       const journalContainer = document.getElementById('journalEntries');
       journalContainer.innerHTML = '';
-      state.journal.forEach((entry, index) => {
-        const div = document.createElement('div');
-        div.className = 'journal-entry';
-        div.innerHTML = `
-          <div class="entry-date">${entry.date}</div>
-          <div>${entry.text}</div>
-        `;
-        journalContainer.appendChild(div);
-      });
-    }
-
-    function addCleanDay() {
-      state.cleanDays++;
-      saveState();
-    }
-
-    function resetCleanDays() {
-      if (confirm('Сбросить счетчик дней без ставок?')) {
-        state.cleanDays = 0;
-        saveState();
+      if (state.journal) {
+        state.journal.forEach((entry) => {
+          const div = document.createElement('div');
+          div.className = 'journal-entry';
+          div.innerHTML = `
+            <div class="entry-date">${entry.date}</div>
+            <div>${entry.text}</div>
+          `;
+          journalContainer.appendChild(div);
+        });
       }
     }
 
-    function addShift() {
-      state.shifts++;
-      saveState();
-    }
-
-    function removeShift() {
-      if (state.shifts > 0) {
-        state.shifts--;
-        saveState();
-      }
-    }
-
-    function toggleWater(index) {
-      state.water[index] = !state.water[index];
-      saveState();
-    }
-
-    function resetWater() {
-      state.water = [false, false, false, false, false, false, false, false];
-      saveState();
-    }
-
-    function saveHabits() {
+    // Экспортируем функции в глобальную область
+    window.addCleanDay = () => { state.cleanDays = (state.cleanDays || 0) + 1; saveState(); };
+    window.resetCleanDays = () => { if (confirm('Сбросить счетчик дней без ставок?')) { state.cleanDays = 0; saveState(); } };
+    window.addShift = () => { state.shifts = (state.shifts || 0) + 1; saveState(); };
+    window.removeShift = () => { if (state.shifts > 0) { state.shifts--; saveState(); } };
+    window.toggleWater = (index) => { if (!state.water) state.water = Array(8).fill(false); state.water[index] = !state.water[index]; saveState(); };
+    window.resetWater = () => { state.water = Array(8).fill(false); saveState(); };
+    window.saveHabits = () => {
+      if (!state.habits) state.habits = Array(4).fill(false);
       for (let i = 0; i < 4; i++) {
         state.habits[i] = document.getElementById(`h${i+1}`).checked;
       }
       saveState();
-    }
-
-    function addJournalEntry() {
+    };
+    window.addJournalEntry = () => {
       const text = document.getElementById('journalInput').value.trim();
       if (!text) return;
-
       const now = new Date();
       const dateStr = now.toLocaleDateString('ru-RU') + ' ' + now.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
-
+      if (!state.journal) state.journal = [];
       state.journal.unshift({ date: dateStr, text: text });
       document.getElementById('journalInput').value = '';
       saveState();
-    }
-
-    function exportData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `reboot_backup_${new Date().toISOString().slice(0,10)}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    }
-
-    function importData() {
-      document.getElementById('importFile').click();
-    }
-
-    function processImport(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          state = JSON.parse(e.target.result);
-          saveState();
-          alert('Данные успешно импортированы!');
-        } catch (err) {
-          alert('Ошибка при чтении файла');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    // Инициализация
-    loadState();
+    };
   </script>
 </body>
 </html>
