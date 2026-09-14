@@ -190,7 +190,6 @@
       color: var(--success-color);
     }
 
-    /* Главный двухколоночный макет страницы */
     .page-layout {
       display: grid;
       grid-template-columns: 1fr;
@@ -234,7 +233,6 @@
       align-content: start;
     }
 
-    /* Правая колонка для единой ленты заметок */
     .twitter-column {
       display: flex;
       flex-direction: column;
@@ -247,7 +245,6 @@
       color: #ffffff;
     }
 
-    /* Единый блок-контейнер для заметок со встроенным полем ввода (Telegram-стиль) */
     .twitter-card-container {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -265,7 +262,6 @@
       color: var(--text-muted);
     }
 
-    /* Поле ввода со встроенной кнопкой в одну строчку */
     .telegram-input-box {
       position: relative;
       display: flex;
@@ -311,27 +307,25 @@
       background-color: var(--accent-hover);
     }
 
-    /* Иконка самолетика (Telegram style) */
     .telegram-send-btn svg {
       width: 16px;
       height: 16px;
       fill: currentColor;
     }
 
-    /* Разделитель внутри общей ленты */
     .twitter-divider {
       height: 1px;
       background-color: var(--border-color);
       margin: 4px 0;
     }
 
-    /* Список отправленных постов внутри единого блока */
     .tweets-scroll-list {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
 
+    /* Элемент сохраненной заметки */
     .tweet-item {
       background-color: var(--bg-color);
       border: 1px solid var(--border-color);
@@ -340,14 +334,82 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
+      position: relative;
     }
 
-    .tweet-header {
+    .tweet-top-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 0.75rem;
       color: var(--text-muted);
+    }
+
+    .tweet-text-content {
+      font-size: 0.85rem;
+      color: var(--text-main);
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    /* Кнопка с тремя точками */
+    .tweet-menu-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 4px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    .tweet-menu-btn:hover {
+      color: #ffffff;
+      background-color: var(--card-hover);
+    }
+
+    /* Выпадающее меню (поповер) */
+    .tweet-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 12px;
+      top: 36px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      z-index: 10;
+      overflow: hidden;
+      min-width: 110px;
+    }
+
+    .tweet-dropdown-menu.show {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tweet-dropdown-menu button {
+      background: none;
+      border: none;
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      width: 100%;
+      border-radius: 0;
+    }
+
+    .tweet-dropdown-menu button:hover {
+      background-color: var(--card-hover);
+    }
+
+    .menu-item-edit {
+      color: #ffffff !important;
+    }
+
+    .menu-item-delete {
+      color: var(--danger-color) !important;
     }
 
     /* Обычные виджеты */
@@ -599,7 +661,6 @@
         <div class="twitter-card-container">
           <div class="tweet-creator-label">Написать новую заметку</div>
           
-          <!-- Поле ввода со встроенной кнопкой в стиле Telegram -->
           <div class="telegram-input-box">
             <textarea id="newTweetText" class="widget-input" placeholder="Что нового?" rows="2" onkeydown="handleKeySend(event)"></textarea>
             <button class="telegram-send-btn" onclick="postNewTweet()" title="Отправить">
@@ -609,7 +670,6 @@
 
           <div class="twitter-divider" id="tweetsDivider" style="display: none;"></div>
 
-          <!-- Список сохраненных заметок внутри единого блока -->
           <div id="twitterTweetsList" class="tweets-scroll-list"></div>
         </div>
       </div>
@@ -777,7 +837,6 @@
       saveAndRender();
     }
 
-    // Отправка по нажатию Enter (если без Shift)
     function handleKeySend(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -791,7 +850,8 @@
       if (!text) return;
 
       const now = new Date();
-      const timeString = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' в ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      // Формат с секундами: ДД.ММ в ЧЧ:ММ:СС
+      const timeString = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' в ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
       const newTweet = {
         id: Date.now(),
@@ -826,6 +886,59 @@
       saveAndRender();
     }
 
+    // Управление выпадающим меню по клику на 3 точки
+    function toggleTweetMenu(event, id) {
+      event.stopPropagation();
+      // Закрываем все остальные открытые меню
+      document.querySelectorAll('.tweet-dropdown-menu').forEach(menu => {
+        if (menu.id !== 'menu-' + id) menu.classList.remove('show');
+      });
+      const menu = document.getElementById('menu-' + id);
+      if (menu) {
+        menu.classList.toggle('show');
+      }
+    }
+
+    // Закрытие меню при клике в любое другое место страницы
+    window.addEventListener('click', () => {
+      document.querySelectorAll('.tweet-dropdown-menu').forEach(menu => {
+        menu.classList.remove('show');
+      });
+    });
+
+    // Перевод конкретной заметки в режим редактирования
+    function startEditTweet(id) {
+      const itemNode = document.getElementById('tweet-item-' + id);
+      if (!itemNode) return;
+
+      const widget = widgets.find(w => w.id === id);
+      if (!widget) return;
+
+      itemNode.innerHTML = `
+        <div class="tweet-top-row">
+          <span>${widget.createdAt || ''}</span>
+          <span style="font-size: 0.75rem; color: var(--accent-color);">Редактирование...</span>
+        </div>
+        <textarea id="edit-text-${id}" class="widget-input" rows="2">${widget.data.text || ''}</textarea>
+        <div class="btn-group" style="margin-top: 4px;">
+          <button class="primary" onclick="saveEditTweet(${id})">Сохранить</button>
+          <button onclick="render()">Отмена</button>
+        </div>
+      `;
+    }
+
+    function saveEditTweet(id) {
+      const textarea = document.getElementById('edit-text-' + id);
+      if (!textarea) return;
+      const newText = textarea.value.trim();
+      
+      const widget = widgets.find(w => w.id === id);
+      if (widget) {
+        widget.data.text = newText;
+        saveAndRender();
+      }
+    }
+
     function render() {
       const mainGrid = document.getElementById('mainDashboard');
       const twitterTweetsList = document.getElementById('twitterTweetsList');
@@ -837,7 +950,6 @@
       const diaryWidgets = widgets.filter(w => w.type === 'diary');
       const otherWidgets = widgets.filter(w => w.type !== 'diary');
 
-      // Показываем разделитель в ленте заметок только если есть сами заметки
       if (diaryWidgets.length > 0) {
         tweetsDivider.style.display = 'block';
       } else {
@@ -847,12 +959,20 @@
       diaryWidgets.forEach(w => {
         const tweetItem = document.createElement('div');
         tweetItem.className = 'tweet-item';
+        tweetItem.id = 'tweet-item-' + w.id;
+
         tweetItem.innerHTML = `
-          <div class="tweet-header">
+          <div class="tweet-top-row">
             <span>${w.createdAt || 'Только что'}</span>
-            <button class="btn-delete" onclick="deleteWidget(${w.id})" title="Удалить заметку">&times;</button>
+            <div style="position: relative;">
+              <button class="tweet-menu-btn" onclick="toggleTweetMenu(event, ${w.id})" title="Опции">•••</button>
+              <div id="menu-${w.id}" class="tweet-dropdown-menu">
+                <button class="menu-item-edit" onclick="startEditTweet(${w.id})">Изменить</button>
+                <button class="menu-item-delete" onclick="deleteWidget(${w.id})">Удалить</button>
+              </div>
+            </div>
           </div>
-          <textarea class="widget-input" rows="2" onchange="updateDiary(${w.id}, this.value)">${w.data.text || ''}</textarea>
+          <div class="tweet-text-content">${w.data.text || ''}</div>
         `;
         twitterTweetsList.appendChild(tweetItem);
       });
@@ -984,14 +1104,6 @@
       const widget = widgets.find(w => w.id === id);
       if (widget) {
         widget.data.splice(idx, 1);
-        saveAndRender();
-      }
-    }
-
-    function updateDiary(id, val) {
-      const widget = widgets.find(w => w.id === id);
-      if (widget) {
-        widget.data.text = val;
         saveAndRender();
       }
     }
