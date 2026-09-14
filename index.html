@@ -3,10 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Personal Dashboard</title>
+  <title>REBIRTH</title>
+  
+  <!-- Иконка для вкладки браузера и мобильных устройств -->
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
     :root {
       --bg-color: #1e1f22;
@@ -39,6 +45,20 @@
       min-height: 100vh;
     }
 
+    /* Логотип */
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      filter: invert(1); /* Сделать черный логотип белым под темную тему */
+    }
+
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     /* Экран входа */
     #authScreen {
       display: flex;
@@ -57,9 +77,13 @@
       text-align: center;
     }
 
+    .auth-card .brand-container {
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
     .auth-card h2 {
       color: #ffffff;
-      margin-bottom: 8px;
     }
 
     .auth-card p {
@@ -332,7 +356,10 @@
   <!-- Экран авторизации -->
   <div id="authScreen">
     <div class="auth-card">
-      <h2>REBIRTH</h2>
+      <div class="brand-container">
+        <img src="icon.png" alt="Logo" class="brand-logo">
+        <h2>REBIRTH</h2>
+      </div>
       <p>Личный доступ к системе</p>
       
       <input type="email" id="emailInput" class="auth-input" placeholder="Ваша почта (Email)">
@@ -351,7 +378,10 @@
   <div id="dashboardScreen">
     <header>
       <div>
-        <h1>REBIRTH</h1>
+        <div class="brand-container">
+          <img src="icon.png" alt="Logo" class="brand-logo">
+          <h1>REBIRTH</h1>
+        </div>
         <div class="subtitle">Личная система трекинга и трансформации</div>
       </div>
       <div class="header-right">
