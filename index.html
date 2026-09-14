@@ -568,11 +568,38 @@
     }
 
     .metric-value {
-      font-size: 2.2rem;
+      font-size: 1.6rem;
       font-weight: 700;
       color: #ffffff;
       text-align: center;
-      margin: 8px 0 14px 0;
+      margin: 6px 0 10px 0;
+    }
+
+    .counter-timer-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .timer-box {
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 4px;
+    }
+
+    .timer-num {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .timer-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
     }
 
     .progress-bar {
@@ -816,8 +843,9 @@
     let widgets = [];
     let currentTweetPage = 1;
     const tweetsPerPage = 5;
-    const charLimit = 120; // Ограничение символов для скрытия под "читать дальше"
-    let expandedTweets = {}; // Хранит состояние раскрытых заметок
+    const charLimit = 120;
+    let expandedTweets = {};
+    let timerInterval = null; // Интервал для тикания таймеров
 
     auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -825,9 +853,11 @@
         document.getElementById('authScreen').style.display = 'none';
         document.getElementById('dashboardScreen').style.display = 'block';
         await loadUserData();
+        startGlobalTimer();
       } else {
         currentUser = null;
         widgets = [];
+        if (timerInterval) clearInterval(timerInterval);
         document.getElementById('authScreen').style.display = 'flex';
         document.getElementById('dashboardScreen').style.display = 'none';
       }
@@ -916,7 +946,6 @@
     async function loadUserData() {
       if (!currentUser) return;
       try {
-        // Загружаем имя пользователя
         const userDoc = await db.collection('users').doc(currentUser.uid).get();
         if (userDoc.exists && userDoc.data().name) {
           document.getElementById('userNameDisplay').innerText = userDoc.data().name;
@@ -924,7 +953,6 @@
           document.getElementById('userNameDisplay').innerText = currentUser.email.split('@')[0];
         }
 
-        // Загружаем виджеты и заметки
         const doc = await db.collection('users').doc(currentUser.uid).collection('data').doc('widgets').get();
         if (doc.exists) {
           widgets = doc.data().list || [];
@@ -959,15 +987,90 @@
     }
 
     function addWidget(type) {
+      let defaultData;
+      let defaultTitle;
+
+      if (type === 'counter') {
+        defaultTitle = 'Счетчик времени';
+        // Если счетчик новый, ставим статус конфигурации
+        defaultData = { configured: false, startTime: null };
+      } else if (type === 'savings') {
+        defaultTitle = 'Финансовая цель';
+        defaultData = { current: 0, target: 100000 };
+      } else if (type === 'tasks') {
+        defaultTitle = 'Мои задачи';
+        defaultData = [{ text: 'Первая задача', done: false }];
+      }
+
       const newWidget = {
         id: Date.now(),
         type: type,
-        title: getDefaultTitle(type),
-        data: getDefaultData(type)
+        title: defaultTitle,
+        data: defaultData
       };
       
       widgets.push(newWidget);
       saveAndRender();
+    }
+
+    function startCounterConfig(id) {
+      const widget = widgets.find(w => w.id === id);
+      if (widget) {
+        widget.data.configured = false;
+        render();
+      }
+    }
+
+    function saveCounterConfig(id) {
+      const nameInput = document.getElementById('counter-name-' + id);
+      const dateInput = document.getElementById('counter-date-' + id);
+
+      if (!dateInput.value) {
+        alert('Пожалуйста, выберите дату и время начала!');
+        return;
+      }
+
+      const widget = widgets.find(w => w.id === id);
+      if (widget) {
+        if (nameInput && nameInput.value.trim()) {
+          widget.title = nameInput.value.trim();
+        }
+        widget.data = {
+          configured: true,
+          startTime: new Date(dateInput.value).getTime()
+        };
+        saveAndRender();
+      }
+    }
+
+    function startGlobalTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        // Обновляем только таймеры на экране без полной перерисовки, чтобы не сбивать фокус полей ввода
+        const counterWidgets = widgets.filter(w => w.type === 'counter' && w.data && w.data.configured);
+        counterWidgets.forEach(w => {
+          const timerNode = document.getElementById('timer-grid-' + w.id);
+          if (timerNode) {
+            const diff = Date.now() - w.data.startTime;
+            if (diff >= 0) {
+              const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+              const minutes = Math.floor((diff / 1000 / 60) % 60);
+              const seconds = Math.floor((diff / 1000) % 60);
+
+              const dElem = document.getElementById('t-days-' + w.id);
+              const hElem = document.getElementById('t-hours-' + w.id);
+              const mElem = document.getElementById('t-mins-' + w.id);
+              const sElem = document.getElementById('t-secs-' + w.id);
+
+              if (dElem) dElem.innerText = days;
+              if (hElem) hElem.innerText = String(hours).padStart(2, '0');
+              if (mElem) mElem.innerText = String(minutes).padStart(2, '0');
+              if (sElem) sElem.innerText = String(seconds).padStart(2, '0');
+            }
+          }
+        });
+      }, 1000);
     }
 
     function handleKeySend(e) {
@@ -994,29 +1097,12 @@
 
       widgets.unshift(newTweet);
       input.value = '';
-      currentTweetPage = 1; // Возвращаемся на первую страницу при отправке новой заметки
+      currentTweetPage = 1;
       saveAndRender();
-    }
-
-    function getDefaultTitle(type) {
-      switch(type) {
-        case 'counter': return 'Счетчик дней';
-        case 'savings': return 'Финансовая цель';
-        case 'tasks': return 'Мои задачи';
-      }
-    }
-
-    function getDefaultData(type) {
-      switch(type) {
-        case 'counter': return { count: 0 };
-        case 'savings': return { current: 0, target: 100000 };
-        case 'tasks': return [{ text: 'Первая задача', done: false }];
-      }
     }
 
     function deleteWidget(id) {
       widgets = widgets.filter(w => w.id !== id);
-      // Корректируем страницу, если после удаления текущая страница стала пустой
       const diaryWidgets = widgets.filter(w => w.type === 'diary');
       const totalPages = Math.ceil(diaryWidgets.length / tweetsPerPage) || 1;
       if (currentTweetPage > totalPages) {
@@ -1025,7 +1111,6 @@
       saveAndRender();
     }
 
-    // Управление выпадающим меню профиля в шапке
     function toggleUserProfileMenu(e) {
       e.stopPropagation();
       closeAllMenus();
@@ -1033,7 +1118,6 @@
       menu.classList.toggle('show');
     }
 
-    // Управление выпадающим меню заметки (три точки)
     function toggleTweetMenu(event, id) {
       event.stopPropagation();
       closeAllMenus();
@@ -1109,7 +1193,6 @@
         paginationContainer.style.display = 'none';
       }
 
-      // Пагинация для заметок (максимум 5 на странице)
       const totalPages = Math.ceil(diaryWidgets.length / tweetsPerPage);
       if (currentTweetPage > totalPages && totalPages > 0) {
         currentTweetPage = totalPages;
@@ -1154,7 +1237,6 @@
         twitterTweetsList.appendChild(tweetItem);
       });
 
-      // Рендерим кнопки пагинации (листы 1, 2, 3...)
       if (totalPages > 1) {
         paginationContainer.style.display = 'flex';
         for (let i = 1; i <= totalPages; i++) {
@@ -1171,7 +1253,7 @@
         paginationContainer.style.display = 'none';
       }
 
-      // Рендеринг остальных виджетов (счетчик, накопления, задачи)
+      // Рендеринг остальных виджетов
       otherWidgets.forEach(w => {
         const card = document.createElement('div');
         card.className = 'card';
@@ -1179,14 +1261,46 @@
         let bodyHTML = '';
 
         if (w.type === 'counter') {
-          bodyHTML = `
-            <div class="metric-value">${w.data.count} <span style="font-size: 1.2rem; color: var(--text-muted);">дн.</span></div>
-            <div class="btn-group">
-              <button class="primary" onclick="updateCounter(${w.id}, 1)">+1 День</button>
-              <button onclick="updateCounter(${w.id}, -1)">-1</button>
-              <button class="danger" onclick="resetCounter(${w.id})">Сброс</button>
-            </div>
-          `;
+          if (!w.data || !w.data.configured) {
+            // Окно настройки счетчика перед запуском
+            const defaultDateTime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            bodyHTML = `
+              <div style="display: flex; flex-direction: column; gap: 10px; margin: 8px 0 14px 0;">
+                <label style="font-size: 0.8rem; color: var(--text-muted);">Название счетчика:</label>
+                <input type="text" id="counter-name-${w.id}" class="widget-input" value="${w.title}">
+                
+                <label style="font-size: 0.8rem; color: var(--text-muted);">Дата и время начала:</label>
+                <input type="datetime-local" id="counter-date-${w.id}" class="widget-input" value="${defaultDateTime}">
+                
+                <button class="primary" style="margin-top: 4px;" onclick="saveCounterConfig(${w.id})">Начать</button>
+              </div>
+            `;
+          } else {
+            // Активный живой таймер с секундами
+            bodyHTML = `
+              <div class="counter-timer-grid" id="timer-grid-${w.id}">
+                <div class="timer-box">
+                  <div class="timer-num" id="t-days-${w.id}">0</div>
+                  <div class="timer-label">дней</div>
+                </div>
+                <div class="timer-box">
+                  <div class="timer-num" id="t-hours-${w.id}">00</div>
+                  <div class="timer-label">часов</div>
+                </div>
+                <div class="timer-box">
+                  <div class="timer-num" id="t-mins-${w.id}">00</div>
+                  <div class="timer-label">минут</div>
+                </div>
+                <div class="timer-box">
+                  <div class="timer-num" id="t-secs-${w.id}">00</div>
+                  <div class="timer-label">секунд</div>
+                </div>
+              </div>
+              <div class="btn-group">
+                <button class="danger" onclick="startCounterConfig(${w.id})">Сбросить / Изменить</button>
+              </div>
+            `;
+          }
         } 
         else if (w.type === 'savings') {
           const current = w.data.current || 0;
@@ -1225,11 +1339,21 @@
           `;
         }
 
+        // Заголовок карточки рендерим только если счетчик уже запущен или это не счетчик
+        const showTitleHeader = (w.type !== 'counter' || (w.data && w.data.configured));
+
         card.innerHTML = `
-          <div class="card-header">
-            <span class="card-title" contenteditable="true" onblur="updateTitle(${w.id}, this.innerText)">${w.title}</span>
-            <button class="btn-delete" onclick="deleteWidget(${w.id})">&times;</button>
-          </div>
+          ${showTitleHeader ? `
+            <div class="card-header">
+              <span class="card-title" contenteditable="true" onblur="updateTitle(${w.id}, this.innerText)">${w.title}</span>
+              <button class="btn-delete" onclick="deleteWidget(${w.id})">&times;</button>
+            </div>
+          ` : `
+            <div class="card-header">
+              <span class="card-title">Настройка счетчика</span>
+              <button class="btn-delete" onclick="deleteWidget(${w.id})">&times;</button>
+            </div>
+          `}
           ${bodyHTML}
         `;
 
@@ -1242,24 +1366,6 @@
       if (widget) {
         widget.title = newTitle;
         saveAndRender();
-      }
-    }
-
-    function updateCounter(id, delta) {
-      const widget = widgets.find(w => w.id === id);
-      if (widget) {
-        widget.data.count = Math.max(0, (widget.data.count || 0) + delta);
-        saveAndRender();
-      }
-    }
-
-    function resetCounter(id) {
-      if (confirm('Сбросить счетчик?')) {
-        const widget = widgets.find(w => w.id === id);
-        if (widget) {
-          widget.data.count = 0;
-          saveAndRender();
-        }
       }
     }
 
