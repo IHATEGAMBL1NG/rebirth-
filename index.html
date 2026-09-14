@@ -134,7 +134,7 @@
       border: 1px solid var(--border-color);
       border-radius: 10px;
       color: var(--text-main);
-      font-size: 1rem; /* Предотвращает зум на iOS */
+      font-size: 1rem;
     }
 
     .auth-input:focus {
@@ -192,7 +192,6 @@
       white-space: nowrap;
     }
 
-    /* Профиль в шапке со скрытым меню выхода */
     .user-profile-menu-container {
       position: relative;
     }
@@ -361,7 +360,7 @@
       border-radius: 10px;
       color: var(--text-main);
       padding: 10px 48px 10px 12px;
-      font-size: 1rem; /* Избегаем зума на iOS */
+      font-size: 1rem;
       min-height: 48px;
       max-height: 120px;
       resize: vertical;
@@ -407,7 +406,6 @@
       gap: 10px;
     }
 
-    /* Элемент сохраненной заметки */
     .tweet-item {
       background-color: var(--bg-color);
       border: 1px solid var(--border-color);
@@ -476,7 +474,7 @@
       color: var(--text-muted);
       font-size: 1.2rem;
       cursor: pointer;
-      padding: 4px 8px; /* Увеличено для удобства нажатия на тачскринах */
+      padding: 4px 8px;
       border-radius: 4px;
       letter-spacing: 1px;
     }
@@ -523,7 +521,7 @@
       color: var(--danger-color) !important;
     }
 
-    /* Обычные виджеты */
+    /* Виджеты с поддержкой перемещения Drag and Drop */
     .card {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -533,6 +531,25 @@
       flex-direction: column;
       justify-content: space-between;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s;
+    }
+
+    .card:active {
+      cursor: grabbing;
+    }
+
+    .card.dragging {
+      opacity: 0.4;
+      transform: scale(0.97);
+      border-color: var(--accent-color);
+    }
+
+    .card.drag-over {
+      border-color: var(--accent-color);
+      background-color: var(--card-hover);
+      transform: translateY(-2px);
     }
 
     .card-header {
@@ -562,7 +579,7 @@
       font-size: 1.3rem;
       cursor: pointer;
       line-height: 1;
-      padding: 4px 8px; /* Удобнее нажимать на смартфоне */
+      padding: 4px 8px;
       border-radius: 4px;
     }
 
@@ -619,7 +636,7 @@
       color: var(--text-main);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 10px 14px; /* Чуть крупнее для пальцев */
+      padding: 10px 14px;
       font-size: 0.85rem;
       font-weight: 500;
       cursor: pointer;
@@ -654,7 +671,7 @@
       border-radius: 8px;
       color: var(--text-main);
       padding: 10px;
-      font-size: 1rem; /* Избегаем автозума на мобилках */
+      font-size: 1rem;
     }
 
     .widget-input:focus {
@@ -707,7 +724,6 @@
       color: var(--text-muted);
     }
 
-    /* Модальное окно */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -814,7 +830,6 @@
       <div class="header-right">
         <div class="sync-status" id="syncStatus">● Синхр.</div>
         
-        <!-- Профиль пользователя с выпадающим меню выхода -->
         <div class="user-profile-menu-container">
           <button class="user-profile-btn" onclick="toggleUserProfileMenu(event)">
             <span id="userNameDisplay">Профиль</span>
@@ -841,7 +856,7 @@
         <div class="main-grid" id="mainDashboard"></div>
       </div>
 
-      <!-- Правая колонка: Единый блок Ленты заметок -->
+      <!-- Правая колонка: Лента заметок -->
       <div class="twitter-column">
         <div class="twitter-column-title">Лента заметок</div>
         
@@ -859,7 +874,6 @@
 
           <div id="twitterTweetsList" class="tweets-scroll-list"></div>
           
-          <!-- Пагинация (листы) -->
           <div id="paginationContainer" class="pagination-container" style="display: none;"></div>
         </div>
       </div>
@@ -1221,6 +1235,108 @@
       }
     }
 
+    // --- ЛОГИКА ПЕРЕМЕЩЕНИЯ ВИДЖЕТОВ (DRAG & DROP для ПК и Touch для телефонов) ---
+    let draggedId = null;
+
+    function setupDragAndDropForCard(cardElement, id) {
+      // ПК (HTML5 Drag and Drop)
+      cardElement.setAttribute('draggable', 'true');
+
+      cardElement.addEventListener('dragstart', (e) => {
+        draggedId = id;
+        setTimeout(() => cardElement.classList.add('dragging'), 0);
+      });
+
+      cardElement.addEventListener('dragend', () => {
+        cardElement.classList.remove('dragging');
+        draggedId = null;
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
+      });
+
+      cardElement.addEventListener('dragover', (e) => {
+        e.preventDefault();
+      });
+
+      cardElement.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        if (id !== draggedId) {
+          cardElement.classList.add('drag-over');
+        }
+      });
+
+      cardElement.addEventListener('dragleave', () => {
+        cardElement.classList.remove('drag-over');
+      });
+
+      cardElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        cardElement.classList.remove('drag-over');
+        if (draggedId !== null && draggedId !== id) {
+          reorderWidgets(draggedId, id);
+        }
+      });
+
+      // Телефон / Сенсорные экраны (Touch Events)
+      let touchStartY = 0;
+      let touchStartX = 0;
+
+      cardElement.addEventListener('touchstart', (e) => {
+        // Игнорируем зажатие внутри инпутов, кнопок и полей редактирования
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON' || e.target.isContentEditable) {
+          return;
+        }
+        draggedId = id;
+        touchStartY = e.touches[0].clientY;
+        touchStartX = e.touches[0].clientX;
+        cardElement.classList.add('dragging');
+      }, { passive: true });
+
+      cardElement.addEventListener('touchmove', (e) => {
+        if (draggedId !== id) return;
+        
+        const touch = e.touches[0];
+        // Находим элемент под пальцем в данный момент
+        const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+        const targetCard = elementUnder ? elementUnder.closest('.card') : null;
+
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
+        if (targetCard && targetCard !== cardElement) {
+          targetCard.classList.add('drag-over');
+        }
+      }, { passive: true });
+
+      cardElement.addEventListener('touchend', (e) => {
+        if (draggedId !== id) return;
+        cardElement.classList.remove('dragging');
+
+        const touch = e.changedTouches[0];
+        const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+        const targetCard = elementUnder ? elementUnder.closest('.card') : null;
+
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
+
+        if (targetCard) {
+          const targetId = parseInt(targetCard.getAttribute('data-id'));
+          if (targetId && targetId !== draggedId) {
+            reorderWidgets(draggedId, targetId);
+          }
+        }
+        draggedId = null;
+      });
+    }
+
+    function reorderWidgets(fromId, toId) {
+      const fromIndex = widgets.findIndex(w => w.id === fromId);
+      const toIndex = widgets.findIndex(w => w.id === toId);
+
+      if (fromIndex !== -1 && toIndex !== -1) {
+        const [movedItem] = widgets.splice(fromIndex, 1);
+        widgets.splice(toIndex, 0, movedItem);
+        saveAndRender();
+      }
+    }
+    // --------------------------------------------------------------------------
+
     function render() {
       const mainGrid = document.getElementById('mainDashboard');
       const twitterTweetsList = document.getElementById('twitterTweetsList');
@@ -1301,10 +1417,11 @@
         paginationContainer.style.display = 'none';
       }
 
-      // Рендеринг остальных виджетов
+      // Рендеринг остальных виджетов с поддержкой перетаскивания
       otherWidgets.forEach(w => {
         const card = document.createElement('div');
         card.className = 'card';
+        card.setAttribute('data-id', w.id);
 
         let bodyHTML = '';
 
@@ -1398,6 +1515,9 @@
           `}
           ${bodyHTML}
         `;
+
+        // Подключаем логику перетаскивания к карточке
+        setupDragAndDropForCard(card, w.id);
 
         mainGrid.appendChild(card);
       });
