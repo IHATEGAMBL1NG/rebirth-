@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>REBIRTH</title>
   
   <link rel="icon" type="image/png" href="icon.png?v=2">
@@ -37,21 +37,22 @@
       margin: 0;
       padding: 0;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       background-color: var(--bg-color);
       color: var(--text-main);
       line-height: 1.5;
-      padding: 16px;
+      padding: 12px;
       max-width: 1200px;
       margin: 0 auto;
       min-height: 100vh;
     }
 
     .brand-logo {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       object-fit: contain;
       filter: invert(1);
     }
@@ -59,7 +60,7 @@
     .brand-container {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     /* Экран Авторизации */
@@ -67,14 +68,14 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 80vh;
+      min-height: 85vh;
     }
 
     .auth-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 16px;
-      padding: 28px;
+      padding: 24px;
       width: 100%;
       max-width: 380px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
@@ -90,7 +91,7 @@
     .auth-header h2 {
       color: #ffffff;
       margin-top: 8px;
-      font-size: 1.4rem;
+      font-size: 1.3rem;
     }
 
     .auth-tabs {
@@ -107,7 +108,7 @@
       background: none;
       border: none;
       color: var(--text-muted);
-      padding: 8px;
+      padding: 10px;
       font-size: 0.9rem;
       font-weight: 600;
       border-radius: 8px;
@@ -133,7 +134,7 @@
       border: 1px solid var(--border-color);
       border-radius: 10px;
       color: var(--text-main);
-      font-size: 0.9rem;
+      font-size: 1rem; /* Предотвращает зум на iOS */
     }
 
     .auth-input:focus {
@@ -159,35 +160,36 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
       border-bottom: 1px solid var(--border-color);
     }
 
     h1 {
-      font-size: 1.4rem;
+      font-size: 1.2rem;
       font-weight: 700;
       color: #ffffff;
     }
 
     .subtitle {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
     }
 
     .header-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
     }
 
     .sync-status {
-      font-size: 0.75rem;
-      padding: 4px 10px;
+      font-size: 0.7rem;
+      padding: 4px 8px;
       border-radius: 6px;
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       color: var(--success-color);
+      white-space: nowrap;
     }
 
     /* Профиль в шапке со скрытым меню выхода */
@@ -199,14 +201,14 @@
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       color: #ffffff;
-      padding: 6px 14px;
+      padding: 6px 10px;
       border-radius: 8px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       transition: background-color 0.2s;
     }
 
@@ -218,13 +220,13 @@
       display: none;
       position: absolute;
       right: 0;
-      top: 40px;
+      top: 38px;
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 10px;
       box-shadow: 0 6px 16px rgba(0,0,0,0.4);
       z-index: 20;
-      min-width: 140px;
+      min-width: 130px;
       overflow: hidden;
     }
 
@@ -237,7 +239,7 @@
       background: none;
       border: none;
       text-align: left;
-      padding: 10px 14px;
+      padding: 12px 14px;
       font-size: 0.85rem;
       color: var(--danger-color);
       cursor: pointer;
@@ -251,7 +253,7 @@
     .page-layout {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 24px;
+      gap: 16px;
     }
 
     @media (min-width: 900px) {
@@ -263,42 +265,68 @@
     .left-column {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
     .widget-controls {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 14px;
-      padding: 14px 18px;
+      padding: 12px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
     .widget-controls-title {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: var(--text-muted);
-      margin-right: 6px;
+      width: 100%;
+      margin-bottom: 2px;
+    }
+
+    @media (min-width: 600px) {
+      .widget-controls-title {
+        width: auto;
+        margin-bottom: 0;
+        margin-right: 4px;
+      }
+    }
+
+    .widget-controls button {
+      flex: 1;
+      min-width: 100px;
+    }
+
+    @media (min-width: 600px) {
+      .widget-controls button {
+        flex: unset;
+      }
     }
 
     .main-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
+      grid-template-columns: 1fr;
+      gap: 14px;
       align-content: start;
+    }
+
+    @media (min-width: 600px) {
+      .main-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     .twitter-column {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
     }
 
     .twitter-column-title {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       color: #ffffff;
     }
@@ -307,15 +335,15 @@
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 14px;
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .tweet-creator-label {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: var(--text-muted);
     }
@@ -333,8 +361,8 @@
       border-radius: 10px;
       color: var(--text-main);
       padding: 10px 48px 10px 12px;
-      font-size: 0.85rem;
-      min-height: 44px;
+      font-size: 1rem; /* Избегаем зума на iOS */
+      min-height: 48px;
       max-height: 120px;
       resize: vertical;
     }
@@ -361,10 +389,6 @@
       transition: background-color 0.2s;
     }
 
-    .telegram-send-btn:hover {
-      background-color: var(--accent-hover);
-    }
-
     .telegram-send-btn svg {
       width: 16px;
       height: 16px;
@@ -374,13 +398,13 @@
     .twitter-divider {
       height: 1px;
       background-color: var(--border-color);
-      margin: 4px 0;
+      margin: 2px 0;
     }
 
     .tweets-scroll-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     /* Элемент сохраненной заметки */
@@ -404,13 +428,12 @@
     }
 
     .tweet-text-content {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       color: var(--text-main);
       word-break: break-word;
       white-space: pre-wrap;
     }
 
-    /* Кнопка "читать дальше..." */
     .read-more-btn {
       background: none;
       border: none;
@@ -418,17 +441,11 @@
       font-size: 0.8rem;
       font-weight: 500;
       cursor: pointer;
-      padding: 0;
-      margin-top: 4px;
+      padding: 4px 0;
+      margin-top: 2px;
       text-align: left;
     }
 
-    .read-more-btn:hover {
-      text-decoration: underline;
-      color: var(--accent-hover);
-    }
-
-    /* Блок пагинации (листы) */
     .pagination-container {
       display: flex;
       justify-content: center;
@@ -440,11 +457,10 @@
       background-color: var(--bg-color);
       border: 1px solid var(--border-color);
       color: var(--text-muted);
-      padding: 4px 10px;
+      padding: 6px 12px;
       font-size: 0.8rem;
       border-radius: 6px;
       cursor: pointer;
-      transition: all 0.2s;
     }
 
     .page-btn.active {
@@ -454,41 +470,29 @@
       font-weight: 600;
     }
 
-    .page-btn:hover:not(.active) {
-      background-color: var(--card-hover);
-      color: #ffffff;
-    }
-
-    /* Кнопка с тремя точками */
     .tweet-menu-btn {
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       cursor: pointer;
-      padding: 0 4px;
+      padding: 4px 8px; /* Увеличено для удобства нажатия на тачскринах */
       border-radius: 4px;
       letter-spacing: 1px;
     }
 
-    .tweet-menu-btn:hover {
-      color: #ffffff;
-      background-color: var(--card-hover);
-    }
-
-    /* Выпадающее меню заметок */
     .tweet-dropdown-menu {
       display: none;
       position: absolute;
       right: 12px;
-      top: 36px;
+      top: 38px;
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       z-index: 10;
       overflow: hidden;
-      min-width: 110px;
+      min-width: 120px;
     }
 
     .tweet-dropdown-menu.show {
@@ -500,7 +504,7 @@
       background: none;
       border: none;
       text-align: left;
-      padding: 8px 12px;
+      padding: 10px 14px;
       font-size: 0.85rem;
       cursor: pointer;
       width: 100%;
@@ -524,7 +528,7 @@
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 14px;
-      padding: 18px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -535,7 +539,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .card-title {
@@ -555,10 +559,10 @@
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       cursor: pointer;
       line-height: 1;
-      padding: 2px 6px;
+      padding: 4px 8px; /* Удобнее нажимать на смартфоне */
       border-radius: 4px;
     }
 
@@ -567,37 +571,29 @@
       background-color: var(--bg-color);
     }
 
-    .metric-value {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: #ffffff;
-      text-align: center;
-      margin: 6px 0 10px 0;
-    }
-
     .counter-timer-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 6px;
       text-align: center;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .timer-box {
       background-color: var(--bg-color);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 8px 4px;
+      padding: 6px 2px;
     }
 
     .timer-num {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: 700;
       color: #ffffff;
     }
 
     .timer-label {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       color: var(--text-muted);
       text-transform: uppercase;
     }
@@ -623,16 +619,11 @@
       color: var(--text-main);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 8px 14px;
+      padding: 10px 14px; /* Чуть крупнее для пальцев */
       font-size: 0.85rem;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
-    }
-
-    button:hover {
-      background-color: var(--border-color);
-      color: #ffffff;
     }
 
     button.primary {
@@ -641,19 +632,10 @@
       border: none;
     }
 
-    button.primary:hover {
-      background-color: var(--accent-hover);
-    }
-
     button.danger {
       background-color: rgba(242, 63, 67, 0.15);
       color: var(--danger-color);
       border: 1px solid rgba(242, 63, 67, 0.3);
-    }
-
-    button.danger:hover {
-      background-color: var(--danger-color);
-      color: #ffffff;
     }
 
     .btn-group {
@@ -671,8 +653,8 @@
       border: 1px solid var(--border-color);
       border-radius: 8px;
       color: var(--text-main);
-      padding: 8px 10px;
-      font-size: 0.85rem;
+      padding: 10px;
+      font-size: 1rem; /* Избегаем автозума на мобилках */
     }
 
     .widget-input:focus {
@@ -691,7 +673,7 @@
     }
 
     .savings-row input {
-      width: 100px;
+      width: 110px;
     }
 
     .task-list {
@@ -704,18 +686,20 @@
     .task-item {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .task-item input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       accent-color: var(--accent-color);
       cursor: pointer;
+      flex-shrink: 0;
     }
 
     .task-item input[type="text"] {
       flex: 1;
+      padding: 8px;
     }
 
     .task-item.done input[type="text"] {
@@ -723,7 +707,7 @@
       color: var(--text-muted);
     }
 
-    /* Модальное окно подтверждения удаления */
+    /* Модальное окно */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -731,10 +715,11 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.6);
+      background-color: rgba(0, 0, 0, 0.7);
       z-index: 100;
       justify-content: center;
       align-items: center;
+      padding: 16px;
     }
 
     .modal-overlay.show {
@@ -745,18 +730,18 @@
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 14px;
-      padding: 22px;
+      padding: 20px;
       width: 100%;
       max-width: 320px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
       text-align: center;
     }
 
     .modal-text {
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       color: var(--text-main);
     }
 
@@ -767,6 +752,7 @@
 
     .modal-buttons button {
       flex: 1;
+      padding: 12px;
     }
   </style>
 </head>
@@ -802,7 +788,7 @@
         <input type="email" id="loginEmail" class="auth-input" placeholder="Ваша почта (Email)" required>
         <input type="password" id="loginPassword" class="auth-input" placeholder="Пароль" required>
         <div id="loginError" class="auth-error"></div>
-        <button type="submit" class="primary" style="padding: 10px;">Войти в личный кабинет</button>
+        <button type="submit" class="primary" style="padding: 12px;">Войти в личный кабинет</button>
       </form>
 
       <form id="registerForm" class="auth-form" style="display: none;" onsubmit="handleRegister(event)">
@@ -810,7 +796,7 @@
         <input type="email" id="regEmail" class="auth-input" placeholder="Ваша почта (Email)" required>
         <input type="password" id="regPassword" class="auth-input" placeholder="Придумайте пароль" required>
         <div id="regError" class="auth-error"></div>
-        <button type="submit" class="primary" style="padding: 10px;">Создать аккаунт</button>
+        <button type="submit" class="primary" style="padding: 12px;">Создать аккаунт</button>
       </form>
     </div>
   </div>
@@ -826,13 +812,13 @@
         <div class="subtitle">Личная система трекинга</div>
       </div>
       <div class="header-right">
-        <div class="sync-status" id="syncStatus">● Синхронизировано</div>
+        <div class="sync-status" id="syncStatus">● Синхр.</div>
         
         <!-- Профиль пользователя с выпадающим меню выхода -->
         <div class="user-profile-menu-container">
           <button class="user-profile-btn" onclick="toggleUserProfileMenu(event)">
             <span id="userNameDisplay">Профиль</span>
-            <span style="font-size: 0.7rem;">▼</span>
+            <span style="font-size: 0.65rem;">▼</span>
           </button>
           <div id="userDropdownMenu" class="user-dropdown-box">
             <button onclick="logout()">Выйти</button>
@@ -847,9 +833,9 @@
       <div class="left-column">
         <div class="widget-controls">
           <span class="widget-controls-title">Добавить виджет:</span>
-          <button class="primary" onclick="addWidget('counter')">+ Счетчик дней</button>
-          <button class="primary" onclick="addWidget('savings')">+ Накопление</button>
-          <button class="primary" onclick="addWidget('tasks')">+ Список задач</button>
+          <button class="primary" onclick="addWidget('counter')">+ Счетчик</button>
+          <button class="primary" onclick="addWidget('savings')">+ Цель</button>
+          <button class="primary" onclick="addWidget('tasks')">+ Задачи</button>
         </div>
 
         <div class="main-grid" id="mainDashboard"></div>
@@ -903,7 +889,7 @@
     const charLimit = 120;
     let expandedTweets = {};
     let timerInterval = null;
-    let pendingDeleteId = null; // ID элемента, который ожидаем удалить
+    let pendingDeleteId = null;
 
     auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -1028,18 +1014,18 @@
       if (!currentUser) return;
       
       const syncStatus = document.getElementById('syncStatus');
-      syncStatus.innerText = '● Сохранение...';
+      syncStatus.innerText = '● Сохр...';
       syncStatus.style.color = 'var(--warning-color)';
 
       try {
         await db.collection('users').doc(currentUser.uid).collection('data').doc('widgets').set({
           list: widgets
         });
-        syncStatus.innerText = '● Синхронизировано';
+        syncStatus.innerText = '● Синхр.';
         syncStatus.style.color = 'var(--success-color)';
       } catch (e) {
         console.error("Error saving data:", e);
-        syncStatus.innerText = '● Ошибка сохранения';
+        syncStatus.innerText = '● Ошибка';
         syncStatus.style.color = 'var(--danger-color)';
       }
     }
@@ -1134,7 +1120,7 @@
       if (!text) return;
 
       const now = new Date();
-      const timeString = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' в ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const timeString = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' в ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
       const newTweet = {
         id: Date.now(),
@@ -1149,7 +1135,6 @@
       saveAndRender();
     }
 
-    // Управление модальным окном подтверждения удаления
     function promptDelete(id) {
       closeAllMenus();
       pendingDeleteId = id;
@@ -1217,7 +1202,7 @@
           <span style="font-size: 0.75rem; color: var(--accent-color);">Редактирование...</span>
         </div>
         <textarea id="edit-text-${id}" class="widget-input" rows="2">${widget.data.text || ''}</textarea>
-        <div class="btn-group" style="margin-top: 4px;">
+        <div class="btn-group" style="margin-top: 6px;">
           <button class="primary" onclick="saveEditTweet(${id})">Сохранить</button>
           <button onclick="render()">Отмена</button>
         </div>
@@ -1327,18 +1312,17 @@
           if (!w.data || !w.data.configured) {
             const defaultDateTime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
             bodyHTML = `
-              <div style="display: flex; flex-direction: column; gap: 10px; margin: 8px 0 14px 0;">
-                <label style="font-size: 0.8rem; color: var(--text-muted);">Название счетчика:</label>
+              <div style="display: flex; flex-direction: column; gap: 8px; margin: 6px 0 10px 0;">
+                <label style="font-size: 0.75rem; color: var(--text-muted);">Название счетчика:</label>
                 <input type="text" id="counter-name-${w.id}" class="widget-input" value="${w.title}">
                 
-                <label style="font-size: 0.8rem; color: var(--text-muted);">Дата и время начала:</label>
+                <label style="font-size: 0.75rem; color: var(--text-muted);">Дата и время начала:</label>
                 <input type="datetime-local" id="counter-date-${w.id}" class="widget-input" value="${defaultDateTime}">
                 
                 <button class="primary" style="margin-top: 4px;" onclick="saveCounterConfig(${w.id})">Начать</button>
               </div>
             `;
           } else {
-            // Без кнопки «Изменить» внутри запущенного таймера, только чистые секунды
             bodyHTML = `
               <div class="counter-timer-grid" id="timer-grid-${w.id}">
                 <div class="timer-box">
@@ -1379,7 +1363,7 @@
               <div class="progress-bar">
                 <div class="progress-fill" style="width: ${percent}%;"></div>
               </div>
-              <div style="font-size: 0.8rem; color: var(--text-muted); text-align: right;">Прогресс: ${percent}%</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-align: right;">Прогресс: ${percent}%</div>
             </div>
           `;
         } 
@@ -1394,7 +1378,7 @@
 
           bodyHTML = `
             <div class="task-list">${itemsHTML}</div>
-            <button onclick="addTask(${w.id})">+ Добавить задачу</button>
+            <button onclick="addTask(${w.id})" style="width: 100%;">+ Добавить задачу</button>
           `;
         }
 
