@@ -13,6 +13,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
+  <!-- Firebase SDK (COMPAT версия для простого подключения) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
   <style>
     :root {
       --bg-color: #1e1f22;
@@ -137,6 +142,16 @@
     .auth-input:focus {
       outline: none;
       border-color: var(--accent-color);
+    }
+
+    /* Сообщения об ошибках в форме авторизации */
+    .auth-error {
+      color: var(--danger-color);
+      font-size: 0.8rem;
+      text-align: center;
+      min-height: 18px;
+      margin-top: -4px;
+      font-weight: 500;
     }
 
     /* Главный Экран (скрыт до авторизации) */
@@ -413,7 +428,8 @@
       <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
         <input type="email" id="loginEmail" class="auth-input" placeholder="Ваша почта (Email)" required>
         <input type="password" id="loginPassword" class="auth-input" placeholder="Пароль" required>
-        <button type="submit" class="primary" style="margin-top: 8px; padding: 10px;">Войти в личный кабинет</button>
+        <div id="loginError" class="auth-error"></div>
+        <button type="submit" class="primary" style="padding: 10px;">Войти в личный кабинет</button>
       </form>
 
       <!-- Форма Регистрации -->
@@ -421,7 +437,8 @@
         <input type="text" id="regName" class="auth-input" placeholder="Имя профиля" required>
         <input type="email" id="regEmail" class="auth-input" placeholder="Ваша почта (Email)" required>
         <input type="password" id="regPassword" class="auth-input" placeholder="Придумайте пароль" required>
-        <button type="submit" class="primary" style="margin-top: 8px; padding: 10px;">Создать аккаунт</button>
+        <div id="regError" class="auth-error"></div>
+        <button type="submit" class="primary" style="padding: 10px;">Создать аккаунт</button>
       </form>
     </div>
   </div>
@@ -437,7 +454,7 @@
         <div class="subtitle">Личная система трекинга и трансформации</div>
       </div>
       <div class="header-right">
-        <div class="sync-status">● Синхронизировано</div>
+        <div class="sync-status" id="syncStatus">● Синхронизировано</div>
         <button style="padding: 6px 12px;" onclick="logout()">Выйти</button>
       </div>
     </header>
@@ -458,20 +475,51 @@
   </div>
 
   <script>
-    // Инициализация пользователей из локального хранилища
-    let users = JSON.parse(localStorage.getItem('rebirth_users')) || [];
+    // ==========================================
+    // 1. ИНИЦИАЛИЗАЦИЯ FIREBASE
+    // ==========================================
+    const firebaseConfig = {
+      // ВСТАВЬТЕ СВАИ КЛЮЧИ ФАЙРБЕЙС СЮДА (из Консоли Firebase)
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-    // Хранилище виджетов
-    let widgets = JSON.parse(localStorage.getItem('rebirth_widgets')) || [
-      { id: 1, type: 'counter', title: 'Чистые дни без ставок', data: { count: 0 } },
-      { id: 2, type: 'savings', title: 'Цель: Переезд в Екб', data: { current: 0, target: 120000 } }
-    ];
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+    let widgets = [];
+
+    // Слушатель состояния авторизации в Firebase
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('dashboardScreen').style.display = 'block';
+        
+        // Загрузка виджетов из Firestore для конкретного пользователя
+        await loadUserWidgets();
+      } else {
+        currentUser = null;
+        widgets = [];
+        document.getElementById('authScreen').style.display = 'flex';
+        document.getElementById('dashboardScreen').style.display = 'none';
+      }
+    });
 
     // Переключение табов авторизации
     function setAuthTab(mode) {
       const tabs = document.querySelectorAll('.auth-tab-btn');
       const loginForm = document.getElementById('loginForm');
       const registerForm = document.getElementById('registerForm');
+      
+      document.getElementById('loginError').innerText = '';
+      document.getElementById('regError').innerText = '';
 
       if (mode === 'login') {
         tabs[0].classList.add('active');
@@ -486,67 +534,126 @@
       }
     }
 
-    // Обработка Входа
-    function handleLogin(e) {
+    // ==========================================
+    // 2. РАБОТА С ЛОГИНОМ И РЕГИСТРАЦИЕЙ С FIREBASE
+    // ==========================================
+
+    // Обработка Входа через Firebase Auth
+    async function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const loginError = document.getElementById('loginError');
+      loginError.innerText = '';
+
+      const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
 
-      // Поиск пользователя
-      const user = users.find(u => u.email === email && u.password === password);
-
-      if (user) {
-        localStorage.setItem('rebirth_logged_in', 'true');
-        showDashboard();
-      } else {
-        alert('Пользователь не найден. Проверьте данные или зарегистрируйтесь!');
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (error) {
+        console.error("Login Error:", error.code);
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email' || error.code === 'auth/invalid-credential') {
+          loginError.innerText = 'пользователь не найден';
+        } else if (error.code === 'auth/wrong-password') {
+          loginError.innerText = 'неправильный пароль';
+        } else {
+          loginError.innerText = 'пользователь не найден';
+        }
       }
     }
 
-    // Обработка Регистрации
-    function handleRegister(e) {
+    // Обработка Регистрации через Firebase Auth
+    async function handleRegister(e) {
       e.preventDefault();
+      const regError = document.getElementById('regError');
+      regError.innerText = '';
+
       const name = document.getElementById('regName').value.trim();
-      const email = document.getElementById('regEmail').value.trim().toLowerCase();
+      const email = document.getElementById('regEmail').value.trim();
       const password = document.getElementById('regPassword').value;
 
-      // Проверка, существует ли уже почта
-      const existingUser = users.find(u => u.email === email);
-      if (existingUser) {
-        alert('Пользователь с такой почтой уже зарегистрирован! Войдите в аккаунт.');
-        setAuthTab('login');
-        return;
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        // Сохраняем имя и данные в коллекцию users
+        await db.collection('users').doc(user.uid).set({
+          name: name,
+          email: email,
+          createdAt: new Date()
+        });
+
+        // Базовые виджеты по умолчанию
+        const defaultWidgets = [
+          { id: 1, type: 'counter', title: 'Чистые дни без ставок', data: { count: 0 } },
+          { id: 2, type: 'savings', title: 'Цель: Переезд в Екб', data: { current: 0, target: 120000 } }
+        ];
+
+        // Записываем дефолтные виджеты пользователю
+        await db.collection('users').doc(user.uid).collection('data').doc('widgets').set({
+          list: defaultWidgets
+        });
+
+      } catch (error) {
+        console.error("Register Error:", error.code);
+        if (error.code === 'auth/email-already-in-use') {
+          regError.innerText = 'пользователь уже зарегистрирован';
+        } else if (error.code === 'auth/weak-password') {
+          regError.innerText = 'пароль должен быть не менее 6 символов';
+        } else {
+          regError.innerText = 'ошибка при регистрации';
+        }
       }
-
-      // Сохранение нового пользователя
-      users.push({ name, email, password });
-      localStorage.setItem('rebirth_users', JSON.stringify(users));
-
-      alert('Регистрация прошла успешно! Теперь войдите в систему.');
-      setAuthTab('login');
-      document.getElementById('loginEmail').value = email;
     }
 
     // Выход из системы
     function logout() {
-      localStorage.removeItem('rebirth_logged_in');
-      document.getElementById('authScreen').style.display = 'flex';
-      document.getElementById('dashboardScreen').style.display = 'none';
+      auth.signOut();
     }
 
-    // Отображение главной страницы
-    function showDashboard() {
-      document.getElementById('authScreen').style.display = 'none';
-      document.getElementById('dashboardScreen').style.display = 'block';
+    // ==========================================
+    // 3. СИНХРОНИЗАЦИЯ С FIRESTORE
+    // ==========================================
+
+    async function loadUserWidgets() {
+      if (!currentUser) return;
+      try {
+        const doc = await db.collection('users').doc(currentUser.uid).collection('data').doc('widgets').get();
+        if (doc.exists) {
+          widgets = doc.data().list || [];
+        } else {
+          widgets = [];
+        }
+        render();
+      } catch (e) {
+        console.error("Error loading widgets:", e);
+      }
+    }
+
+    async function saveAndRender() {
       render();
+      if (!currentUser) return;
+      
+      const syncStatus = document.getElementById('syncStatus');
+      syncStatus.innerText = '● Сохранение...';
+      syncStatus.style.color = 'var(--warning-color)';
+
+      try {
+        await db.collection('users').doc(currentUser.uid).collection('data').doc('widgets').set({
+          list: widgets
+        });
+        syncStatus.innerText = '● Синхронизировано';
+        syncStatus.style.color = 'var(--success-color)';
+      } catch (e) {
+        console.error("Error saving widgets:", e);
+        syncStatus.innerText = '● Ошибка синхронизации';
+        syncStatus.style.color = 'var(--danger-color)';
+      }
     }
 
-    // Проверка статуса входа
-    if (localStorage.getItem('rebirth_logged_in') === 'true') {
-      showDashboard();
-    }
+    // ==========================================
+    // 4. ЛОГИКА ВИДЖЕТОВ И ИНТЕРФЕЙСА
+    // ==========================================
 
-    // Добавление виджета
     function addWidget(type) {
       const newWidget = {
         id: Date.now(),
@@ -576,19 +683,11 @@
       }
     }
 
-    // Удаление виджета
     function deleteWidget(id) {
       widgets = widgets.filter(w => w.id !== id);
       saveAndRender();
     }
 
-    // Сохранение и обновление экрана
-    function saveAndRender() {
-      localStorage.setItem('rebirth_widgets', JSON.stringify(widgets));
-      render();
-    }
-
-    // Генерация всех элементов
     function render() {
       const container = document.getElementById('dashboard');
       container.innerHTML = '';
@@ -599,7 +698,6 @@
 
         let bodyHTML = '';
 
-        // 1. Счетчик
         if (w.type === 'counter') {
           bodyHTML = `
             <div class="metric-value">${w.data.count} <span style="font-size: 1.2rem; color: var(--text-muted);">дн.</span></div>
@@ -610,7 +708,6 @@
             </div>
           `;
         } 
-        // 2. Накопления
         else if (w.type === 'savings') {
           const current = w.data.current || 0;
           const target = w.data.target || 1;
@@ -633,7 +730,6 @@
             </div>
           `;
         } 
-        // 3. Задачи
         else if (w.type === 'tasks') {
           const itemsHTML = w.data.map((task, idx) => `
             <div class="task-item ${task.done ? 'done' : ''}">
@@ -648,7 +744,6 @@
             <button onclick="addTask(${w.id})">+ Добавить задачу</button>
           `;
         } 
-        // 4. Дневник
         else if (w.type === 'diary') {
           bodyHTML = `
             <textarea class="widget-input" placeholder="Напиши мысли или заметку..." onchange="updateDiary(${w.id}, this.value)">${w.data.text}</textarea>
@@ -667,16 +762,14 @@
       });
     }
 
-    // Редактирование заголовка по клику
     function updateTitle(id, newTitle) {
       const widget = widgets.find(w => w.id === id);
       if (widget) {
         widget.title = newTitle;
-        localStorage.setItem('rebirth_widgets', JSON.stringify(widgets));
+        saveAndRender();
       }
     }
 
-    // Логика Счетчика
     function updateCounter(id, delta) {
       const widget = widgets.find(w => w.id === id);
       if (widget) {
@@ -684,6 +777,7 @@
         saveAndRender();
       }
     }
+
     function resetCounter(id) {
       if (confirm('Сбросить значение счетчика?')) {
         const widget = widgets.find(w => w.id === id);
@@ -694,7 +788,6 @@
       }
     }
 
-    // Логика Накоплений
     function updateSavings(id, field, val) {
       const widget = widgets.find(w => w.id === id);
       if (widget) {
@@ -703,7 +796,6 @@
       }
     }
 
-    // Логика Задач
     function addTask(id) {
       const widget = widgets.find(w => w.id === id);
       if (widget) {
@@ -711,6 +803,7 @@
         saveAndRender();
       }
     }
+
     function toggleTask(id, idx) {
       const widget = widgets.find(w => w.id === id);
       if (widget) {
@@ -718,13 +811,15 @@
         saveAndRender();
       }
     }
+
     function updateTaskText(id, idx, val) {
       const widget = widgets.find(w => w.id === id);
       if (widget) {
         widget.data[idx].text = val;
-        localStorage.setItem('rebirth_widgets', JSON.stringify(widgets));
+        saveAndRender();
       }
     }
+
     function removeTask(id, idx) {
       const widget = widgets.find(w => w.id === id);
       if (widget) {
@@ -733,12 +828,11 @@
       }
     }
 
-    // Логика Дневника
     function updateDiary(id, val) {
       const widget = widgets.find(w => w.id === id);
       if (widget) {
         widget.data.text = val;
-        localStorage.setItem('rebirth_widgets', JSON.stringify(widgets));
+        saveAndRender();
       }
     }
   </script>
