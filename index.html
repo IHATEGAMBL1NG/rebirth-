@@ -1,658 +1,534 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>REBIRTH</title>
-  
-  <!-- Иконка для вкладки браузера и мобильных устройств -->
-  <link rel="icon" type="image/png" href="icon.png?v=2">
-  <link rel="apple-touch-icon" href="icon.png?v=2">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный Трекер</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <style>
-    :root {
-      --bg-color: #1e1f22;
-      --card-bg: #2b2d31;
-      --card-hover: #313338;
-      --border-color: #3f4248;
-      --text-main: #dbdee1;
-      --text-muted: #949ba4;
-      --accent-color: #5865f2;
-      --accent-hover: #4752c4;
-      --success-color: #23a55a;
-      --danger-color: #f23f43;
-      --warning-color: #f0b232;
-    }
+        body {
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
+        /* Экран Авторизации */
+        .auth-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #2b5876, #4e4376);
+        }
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      line-height: 1.5;
-      padding: 16px;
-      max-width: 900px;
-      margin: 0 auto;
-      min-height: 100vh;
-    }
+        .auth-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 400px;
+        }
 
-    /* Логотип */
-    .brand-logo {
-      width: 32px;
-      height: 32px;
-      object-fit: contain;
-      filter: invert(1); /* Сделать черный логотип белым под темную тему */
-    }
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
 
-    .brand-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            color: #888;
+            cursor: pointer;
+            transition: 0.3s;
+        }
 
-    /* Экран входа */
-    #authScreen {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 80vh;
-    }
+        .auth-tab.active {
+            color: #4e4376;
+            border-bottom: 3px solid #4e4376;
+        }
 
-    .auth-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 24px;
-      width: 100%;
-      max-width: 360px;
-      text-align: center;
-    }
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
 
-    .auth-card .brand-container {
-      justify-content: center;
-      margin-bottom: 8px;
-    }
+        .auth-form input {
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
 
-    .auth-card h2 {
-      color: #ffffff;
-    }
+        .auth-form button {
+            padding: 12px;
+            background: #4e4376;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-    .auth-card p {
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      margin-bottom: 20px;
-    }
+        .auth-form button:hover {
+            background: #2b5876;
+        }
 
-    .auth-input {
-      width: 100%;
-      padding: 10px 12px;
-      margin-bottom: 12px;
-      background-color: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      color: var(--text-main);
-      font-size: 0.9rem;
-    }
+        /* Главный Экран */
+        .app-screen {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+        }
 
-    .auth-input:focus {
-      outline: none;
-      border-color: var(--accent-color);
-    }
+        header {
+            background: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
 
-    .auth-error {
-      color: var(--danger-color);
-      font-size: 0.8rem;
-      margin-bottom: 12px;
-      display: none;
-    }
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2b5876;
+        }
 
-    /* Дашборд скрыт до входа */
-    #dashboardScreen {
-      display: none;
-    }
+        .sync-status {
+            font-size: 13px;
+            color: #28a745;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border-color);
-    }
+        .btn-logout {
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
 
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #ffffff;
-      letter-spacing: -0.5px;
-    }
+        /* Управление Виджетами */
+        .controls {
+            padding: 20px 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: #eaeaea;
+            align-items: center;
+        }
 
-    .subtitle {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
+        .controls span {
+            font-weight: bold;
+            margin-right: 10px;
+        }
 
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+        .btn-add {
+            padding: 8px 14px;
+            background: #2b5876;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+        }
 
-    .sync-status {
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      color: var(--warning-color);
-    }
+        .btn-add:hover {
+            background: #4e4376;
+        }
 
-    .sync-status.online {
-      color: var(--success-color);
-    }
+        /* Сетка Виджетов */
+        .dashboard {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            overflow-y: auto;
+        }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
+        .widget {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
 
-    .card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
 
-    .card-title {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+        .widget-title {
+            font-weight: bold;
+            color: #4e4376;
+            outline: none;
+        }
 
-    .metric-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #ffffff;
-      margin-bottom: 8px;
-    }
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 18px;
+            cursor: pointer;
+        }
 
-    .metric-desc {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-    }
+        .btn-delete:hover {
+            color: #dc3545;
+        }
 
-    .progress-bar {
-      width: 100%;
-      height: 8px;
-      background-color: var(--bg-color);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
+        /* Интерактивные элементы виджетов */
+        .counter-val {
+            font-size: 36px;
+            font-weight: bold;
+            text-align: center;
+            color: #2b5876;
+            margin: 10px 0;
+        }
 
-    .progress-fill {
-      height: 100%;
-      background-color: var(--accent-color);
-      width: 0%;
-      transition: width 0.3s ease;
-    }
+        .counter-btns {
+            display: flex;
+            gap: 10px;
+        }
 
-    button {
-      background-color: var(--card-hover);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+        .counter-btns button {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            border-radius: 4px;
+            cursor: pointer;
+        }
 
-    button:hover {
-      background-color: var(--border-color);
-      color: #ffffff;
-    }
+        .editable-text {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 80px;
+        }
 
-    button.primary {
-      background-color: var(--accent-color);
-      color: #ffffff;
-      border: none;
-      width: 100%;
-    }
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
 
-    button.primary:hover {
-      background-color: var(--accent-hover);
-    }
+        .task-item input[type="text"] {
+            flex: 1;
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
 
-    .btn-group button.primary {
-      width: auto;
-    }
+        .progress-bar {
+            width: 100%;
+            background: #eee;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
 
-    button.danger {
-      background-color: rgba(242, 63, 67, 0.1);
-      color: var(--danger-color);
-      border: 1px solid rgba(242, 63, 67, 0.3);
-    }
-
-    button.danger:hover {
-      background-color: var(--danger-color);
-      color: #ffffff;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .habits-list {
-      list-style: none;
-    }
-
-    .habit-item {
-      display: flex;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .habit-item:last-child {
-      border-bottom: none;
-    }
-
-    .habit-item input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--accent-color);
-      margin-right: 12px;
-      cursor: pointer;
-    }
-
-    .water-tracker {
-      display: flex;
-      gap: 6px;
-      margin-top: 10px;
-    }
-
-    .water-drop {
-      flex: 1;
-      height: 32px;
-      background-color: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .water-drop.active {
-      background-color: #23a55a;
-      border-color: #23a55a;
-    }
-
-    .journal-section {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 18px;
-      margin-bottom: 24px;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 100px;
-      background-color: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      color: var(--text-main);
-      padding: 12px;
-      font-size: 0.95rem;
-      resize: vertical;
-      margin-bottom: 12px;
-    }
-
-    textarea:focus {
-      outline: none;
-      border-color: var(--accent-color);
-    }
-
-    .journal-entry {
-      background-color: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 12px;
-      margin-top: 12px;
-    }
-
-    .entry-date {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-  </style>
+        .progress-fill {
+            height: 100%;
+            background: #28a745;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Экран авторизации -->
-  <div id="authScreen">
-    <div class="auth-card">
-      <div class="brand-container">
-        <img src="icon.png" alt="Logo" class="brand-logo">
-        <h2>REBIRTH</h2>
-      </div>
-      <p>Личный доступ к системе</p>
-      
-      <input type="email" id="emailInput" class="auth-input" placeholder="Ваша почта (Email)">
-      <input type="password" id="passwordInput" class="auth-input" placeholder="Пароль">
-      
-      <div id="authError" class="auth-error"></div>
+    <!-- Экран Входа / Регистрации -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-card">
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">Вход</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')">Регистрация</button>
+            </div>
 
-      <div style="display: flex; gap: 8px; margin-top: 8px;">
-        <button class="primary" onclick="login()">Войти</button>
-        <button style="width: 100%;" onclick="register()">Регистрация</button>
-      </div>
-    </div>
-  </div>
+            <!-- Форма Входа -->
+            <form id="loginForm" class="auth-form" onsubmit="handleAuth(event)">
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Пароль" required>
+                <button type="submit">Войти в кабинет</button>
+            </form>
 
-  <!-- Главный Дашборд (скрыт до авторизации) -->
-  <div id="dashboardScreen">
-    <header>
-      <div>
-        <div class="brand-container">
-          <img src="icon.png" alt="Logo" class="brand-logo">
-          <h1>REBIRTH</h1>
+            <!-- Форма Регистрации -->
+            <form id="registerForm" class="auth-form" style="display: none;" onsubmit="handleAuth(event)">
+                <input type="text" placeholder="Ваше имя" required>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Придумайте пароль" required>
+                <button type="submit">Создать аккаунт</button>
+            </form>
         </div>
-        <div class="subtitle">Личная система трекинга и трансформации</div>
-      </div>
-      <div class="header-right">
-        <div id="syncStatus" class="sync-status">Подключение...</div>
-        <button style="padding: 4px 10px; font-size: 0.8rem;" onclick="logout()">Выйти</button>
-      </div>
-    </header>
-
-    <div class="grid">
-      <!-- Дни без ставок -->
-      <div class="card">
-        <div>
-          <div class="card-title">Чистые дни</div>
-          <div class="metric-value" id="cleanDays">0</div>
-          <div class="metric-desc">Дней без казино и БК</div>
-        </div>
-        <div class="btn-group">
-          <button class="primary" onclick="addCleanDay()">+1 День</button>
-          <button class="danger" onclick="resetCleanDays()">Срыв</button>
-        </div>
-      </div>
-
-      <!-- Цель на Екб -->
-      <div class="card">
-        <div>
-          <div class="card-title">Цель: Екб</div>
-          <div class="metric-value" id="savingsValue">0 ₽</div>
-          <div class="progress-bar">
-            <div class="progress-fill" id="savingsProgress"></div>
-          </div>
-          <div class="metric-desc" id="shiftsCount">Смен отработано: 0 (Цель: 120 000 ₽)</div>
-        </div>
-        <div class="btn-group">
-          <button class="primary" onclick="addShift()">+1 Смена</button>
-          <button onclick="removeShift()">-1</button>
-        </div>
-      </div>
-
-      <!-- Водный баланс -->
-      <div class="card">
-        <div>
-          <div class="card-title">Водный баланс</div>
-          <div class="metric-desc">Цель: 8 стаканов в день</div>
-          <div class="water-tracker" id="waterTracker">
-            <div class="water-drop" onclick="toggleWater(0)"></div>
-            <div class="water-drop" onclick="toggleWater(1)"></div>
-            <div class="water-drop" onclick="toggleWater(2)"></div>
-            <div class="water-drop" onclick="toggleWater(3)"></div>
-            <div class="water-drop" onclick="toggleWater(4)"></div>
-            <div class="water-drop" onclick="toggleWater(5)"></div>
-            <div class="water-drop" onclick="toggleWater(6)"></div>
-            <div class="water-drop" onclick="toggleWater(7)"></div>
-          </div>
-        </div>
-        <div style="margin-top: 16px;">
-          <button onclick="resetWater()">Сбросить воду</button>
-        </div>
-      </div>
     </div>
 
-    <!-- Чек-лист привычек -->
-    <div class="journal-section">
-      <div class="card-title">Привычки на сегодня</div>
-      <ul class="habits-list">
-        <li class="habit-item">
-          <input type="checkbox" id="h1" onchange="saveHabits()">
-          <label for="h1">Стакан воды после пробуждения</label>
-        </li>
-        <li class="habit-item">
-          <input type="checkbox" id="h2" onchange="saveHabits()">
-          <label for="h2">Без кофеина натощак</label>
-        </li>
-        <li class="habit-item">
-          <input type="checkbox" id="h3" onchange="saveHabits()">
-          <label for="h3">Зарядка / растяжка 10 минут</label>
-        </li>
-        <li class="habit-item">
-          <input type="checkbox" id="h4" onchange="saveHabits()">
-          <label for="h4">Без захода в БК / казино</label>
-        </li>
-      </ul>
+    <!-- Главный Экран Приложения -->
+    <div id="appScreen" class="app-screen">
+        <header>
+            <div class="header-title">Мой Личный Дневник</div>
+            <div class="sync-status">● Данные синхронизированы</div>
+            <button class="btn-logout" onclick="logout()">Выйти</button>
+        </header>
+
+        <div class="controls">
+            <span>Добавить виджет:</span>
+            <button class="btn-add" onclick="addWidget('counter')">+ Счетчик дней</button>
+            <button class="btn-add" onclick="addWidget('savings')">+ Накопление</button>
+            <button class="btn-add" onclick="addWidget('tasks')">+ Задачи</button>
+            <button class="btn-add" onclick="addWidget('diary')">+ Дневник</button>
+        </div>
+
+        <div class="dashboard" id="dashboard">
+            <!-- Динамические виджеты появятся здесь -->
+        </div>
     </div>
 
-    <!-- Дневник -->
-    <div class="journal-section">
-      <div class="card-title">Дневник & Мысли</div>
-      <textarea id="journalInput" placeholder="Как прошла смена? Что на уме? Напиши пару строк..."></textarea>
-      <button class="primary" style="width: auto;" onclick="addJournalEntry()">Сохранить запись</button>
-      
-      <div id="journalEntries" style="margin-top: 16px;"></div>
-    </div>
-  </div>
+    <script>
+        let widgets = JSON.parse(localStorage.getItem('user_widgets')) || [];
 
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        // Переключение между Входом и Регистрацией
+        function switchAuthTab(type) {
+            const tabs = document.querySelectorAll('.auth-tab');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDEvtnKd0Sr7Y-yLg4lzJeOCT07oradrMc",
-      authDomain: "ihategambl1ng-rebirth.firebaseapp.com",
-      projectId: "ihategambl1ng-rebirth",
-      storageBucket: "ihategambl1ng-rebirth.firebasestorage.app",
-      messagingSenderId: "667356577739",
-      appId: "1:667356577739:web:12710a0312146e1f9a804e",
-      measurementId: "G-7P6W76YH92"
-    };
+            tabs.forEach(tab => tab.classList.remove('active'));
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let currentUser = null;
-    let docUnsubscribe = null;
-    let state = {
-      cleanDays: 0,
-      shifts: 0,
-      water: [false, false, false, false, false, false, false, false],
-      habits: [false, false, false, false],
-      journal: []
-    };
-
-    const authScreen = document.getElementById('authScreen');
-    const dashboardScreen = document.getElementById('dashboardScreen');
-    const authError = document.getElementById('authError');
-    const syncStatusEl = document.getElementById('syncStatus');
-
-    // Следим за статусом входа
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        currentUser = user;
-        authScreen.style.display = 'none';
-        dashboardScreen.style.display = 'block';
-        subscribeToData();
-      } else {
-        currentUser = null;
-        if (docUnsubscribe) docUnsubscribe();
-        authScreen.style.display = 'flex';
-        dashboardScreen.style.display = 'none';
-      }
-    });
-
-    // Регистрация
-    window.register = async () => {
-      const email = document.getElementById('emailInput').value;
-      const password = document.getElementById('passwordInput').value;
-      authError.style.display = 'none';
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-      } catch (err) {
-        authError.innerText = "Ошибка: " + err.message;
-        authError.style.display = 'block';
-      }
-    };
-
-    // Вход
-    window.login = async () => {
-      const email = document.getElementById('emailInput').value;
-      const password = document.getElementById('passwordInput').value;
-      authError.style.display = 'none';
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (err) {
-        authError.innerText = "Ошибка входа: проверьте email/пароль";
-        authError.style.display = 'block';
-      }
-    };
-
-    // Выход
-    window.logout = () => {
-      signOut(auth);
-    };
-
-    // Слушатель данных из Firestore (привязан к UID юзера)
-    function subscribeToData() {
-      if (!currentUser) return;
-      const docRef = doc(db, "users", currentUser.uid);
-
-      docUnsubscribe = onSnapshot(docRef, (snapshot) => {
-        if (snapshot.exists()) {
-          state = snapshot.data();
-          render();
-          syncStatusEl.innerText = "● Синхронизировано";
-          syncStatusEl.classList.add('online');
-        } else {
-          saveState();
+            if (type === 'login') {
+                tabs[0].classList.add('active');
+                loginForm.style.display = 'flex';
+                registerForm.style.display = 'none';
+            } else {
+                tabs[1].classList.add('active');
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'flex';
+            }
         }
-      }, (error) => {
-        console.error("Ошибка базы:", error);
-      });
-    }
 
-    async function saveState() {
-      if (!currentUser) return;
-      syncStatusEl.innerText = "Сохранение...";
-      try {
-        const docRef = doc(db, "users", currentUser.uid);
-        await setDoc(docRef, state);
-        syncStatusEl.innerText = "● Синхронизировано";
-        syncStatusEl.classList.add('online');
-      } catch (e) {
-        console.error("Ошибка сохранения:", e);
-      }
-    }
-
-    function render() {
-      document.getElementById('cleanDays').innerText = state.cleanDays || 0;
-      
-      const shifts = state.shifts || 0;
-      const savings = shifts * 6000;
-      document.getElementById('savingsValue').innerText = savings.toLocaleString() + ' ₽';
-      document.getElementById('shiftsCount').innerText = `Смен отработано: ${shifts} (Цель: 120 000 ₽)`;
-      
-      const progressPercent = Math.min(100, (savings / 120000) * 100);
-      document.getElementById('savingsProgress').style.width = progressPercent + '%';
-
-      // Water
-      const drops = document.querySelectorAll('.water-drop');
-      drops.forEach((drop, index) => {
-        if (state.water && state.water[index]) {
-          drop.classList.add('active');
-        } else {
-          drop.classList.remove('active');
+        // Авторизация / Регистрация
+        function handleAuth(e) {
+            e.preventDefault();
+            localStorage.setItem('is_auth', 'true');
+            showApp();
         }
-      });
 
-      // Habits
-      for (let i = 0; i < 4; i++) {
-        document.getElementById(`h${i+1}`).checked = (state.habits && state.habits[i]) || false;
-      }
+        // Выход из системы
+        function logout() {
+            localStorage.removeItem('is_auth');
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('appScreen').style.display = 'none';
+        }
 
-      // Journal
-      const journalContainer = document.getElementById('journalEntries');
-      journalContainer.innerHTML = '';
-      if (state.journal) {
-        state.journal.forEach((entry) => {
-          const div = document.createElement('div');
-          div.className = 'journal-entry';
-          div.innerHTML = `
-            <div class="entry-date">${entry.date}</div>
-            <div>${entry.text}</div>
-          `;
-          journalContainer.appendChild(div);
-        });
-      }
-    }
+        // Показ приложения при авторизации
+        function showApp() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'flex';
+            renderWidgets();
+        }
 
-    window.addCleanDay = () => { state.cleanDays = (state.cleanDays || 0) + 1; saveState(); };
-    window.resetCleanDays = () => { if (confirm('Сбросить счетчик дней без ставок?')) { state.cleanDays = 0; saveState(); } };
-    window.addShift = () => { state.shifts = (state.shifts || 0) + 1; saveState(); };
-    window.removeShift = () => { if (state.shifts > 0) { state.shifts--; saveState(); } };
-    window.toggleWater = (index) => { if (!state.water) state.water = Array(8).fill(false); state.water[index] = !state.water[index]; saveState(); };
-    window.resetWater = () => { state.water = Array(8).fill(false); saveState(); };
-    window.saveHabits = () => {
-      if (!state.habits) state.habits = Array(4).fill(false);
-      for (let i = 0; i < 4; i++) {
-        state.habits[i] = document.getElementById(`h${i+1}`).checked;
-      }
-      saveState();
-    };
-    window.addJournalEntry = () => {
-      const text = document.getElementById('journalInput').value.trim();
-      if (!text) return;
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('ru-RU') + ' ' + now.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
-      if (!state.journal) state.journal = [];
-      state.journal.unshift({ date: dateStr, text: text });
-      document.getElementById('journalInput').value = '';
-      saveState();
-    };
-  </script>
+        // Проверка состояния при загрузке
+        if (localStorage.getItem('is_auth') === 'true') {
+            showApp();
+        }
+
+        // Добавление нового виджета
+        function addWidget(type) {
+            const newWidget = {
+                id: Date.now(),
+                type: type,
+                title: getDefaultTitle(type),
+                data: getDefaultData(type)
+            };
+            widgets.push(newWidget);
+            saveAndRender();
+        }
+
+        function getDefaultTitle(type) {
+            switch(type) {
+                case 'counter': return 'Счетчик (дней без...)';
+                case 'savings': return 'Цель накопления';
+                case 'tasks': return 'Список задач';
+                case 'diary': return 'Заметка / Дневник';
+            }
+        }
+
+        function getDefaultData(type) {
+            switch(type) {
+                case 'counter': return { count: 0 };
+                case 'savings': return { current: 0, target: 10000 };
+                case 'tasks': return [{ text: 'Новая задача', done: false }];
+                case 'diary': return { text: '' };
+            }
+        }
+
+        // Удаление виджета
+        function deleteWidget(id) {
+            widgets = widgets.filter(w => w.id !== id);
+            saveAndRender();
+        }
+
+        // Сохранение изменений в хранилище и перерисовка
+        function saveAndRender() {
+            localStorage.setItem('user_widgets', JSON.stringify(widgets));
+            renderWidgets();
+        }
+
+        // Отрисовка виджетов
+        function renderWidgets() {
+            const container = document.getElementById('dashboard');
+            container.innerHTML = '';
+
+            widgets.forEach(w => {
+                const card = document.createElement('div');
+                card.className = 'widget';
+                
+                let contentHTML = '';
+
+                if (w.type === 'counter') {
+                    contentHTML = `
+                        <div class="counter-val">${w.data.count} дн.</div>
+                        <div class="counter-btns">
+                            <button onclick="updateCounter(${w.id}, 1)">+1 день</button>
+                            <button onclick="updateCounter(${w.id}, -1)">-1 день</button>
+                            <button onclick="resetCounter(${w.id})">Сброс</button>
+                        </div>
+                    `;
+                } else if (w.type === 'savings') {
+                    const percent = Math.min(100, Math.round((w.data.current / w.data.target) * 100) || 0);
+                    contentHTML = `
+                        <div>Собрано: <input type="number" value="${w.data.current}" onchange="updateSavings(${w.id}, 'current', this.value)" style="width: 70px;"> руб.</div>
+                        <div>Цель: <input type="number" value="${w.data.target}" onchange="updateSavings(${w.id}, 'target', this.value)" style="width: 70px;"> руб.</div>
+                        <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div>
+                    `;
+                } else if (w.type === 'tasks') {
+                    let taskList = w.data.map((t, index) => `
+                        <div class="task-item">
+                            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${w.id}, ${index})">
+                            <input type="text" value="${t.text}" onchange="updateTaskText(${w.id}, ${index}, this.value)">
+                            <button style="border:none; background:none; cursor:pointer;" onclick="removeTask(${w.id}, ${index})">✕</button>
+                        </div>
+                    `).join('');
+                    contentHTML = `${taskList}<button class="btn-add" style="margin-top:5px;" onclick="addTaskItem(${w.id})">+ Задача</button>`;
+                } else if (w.type === 'diary') {
+                    contentHTML = `
+                        <textarea class="editable-text" placeholder="Пишите здесь..." onchange="updateDiary(${w.id}, this.value)">${w.data.text}</textarea>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="widget-header">
+                        <span class="widget-title" contenteditable="true" onblur="updateTitle(${w.id}, this.innerText)">${w.title}</span>
+                        <button class="btn-delete" onclick="deleteWidget(${w.id})">&times;</button>
+                    </div>
+                    ${contentHTML}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Функция обновления заглавий виджетов
+        function updateTitle(id, newTitle) {
+            const widget = widgets.find(w => w.id === id);
+            if (widget) {
+                widget.title = newTitle;
+                localStorage.setItem('user_widgets', JSON.stringify(widgets));
+            }
+        }
+
+        // Функции для Счетчика
+        function updateCounter(id, delta) {
+            const widget = widgets.find(w => w.id === id);
+            if (widget) {
+                widget.data.count = Math.max(0, widget.data.count + delta);
+                saveAndRender();
+            }
+        }
+        function resetCounter(id) {
+            const widget = widgets.find(w => w.id === id);
+            if (widget) {
+                widget.data.count = 0;
+                saveAndRender();
+            }
+        }
+
+        // Функции для Накоплений
+        function updateSavings(id, key, val) {
+            const widget = widgets.find(w => w.id === id);
+            if (widget) {
+                widget.data[key] = parseFloat(val) || 0;
+                saveAndRender();
+            }
+        }
+
+        // Функции для Задач
+        function addTaskItem(id) {
+            const widget = widgets.find(w => w.id === id);
+            if (widget) {
+                widget.data.push({ text: 'Новая задача', done: false });
+                saveAndRender();
+            }
+        }
+        function toggleTask(id, index) {
+            const widget = widgets.find(w => w.id === id);
+            if (widget) {
+                widget.data[index].done = !widget.data[index].done;
+                saveAndRender();
+            }
+        }
+        function updateTaskText(id, index, text) {
+            const widget = widgets.find(w => w.id === id);
+            if (widget) {
+                widget.data[index].text = text;
+                localStorage.setItem('user_widgets', JSON.stringify(widgets));
+            }
+        }
+        function removeTask(id, index) {
+            const widget = widgets.find(w => w.id === id);
+            if (widget) {
+                widget.data.splice(index, 1);
+                saveAndRender();
+            }
+        }
+
+        // Функции для Дневника
+        function updateDiary(id, text) {
+            const widget = widgets.find(w => w.id === id);
+            if (widget) {
+                widget.data.text = text;
+                localStorage.setItem('user_widgets', JSON.stringify(widgets));
+            }
+        }
+    </script>
 </body>
 </html>
