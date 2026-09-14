@@ -199,7 +199,7 @@
 
     @media (min-width: 900px) {
       .page-layout {
-        grid-template-columns: 1fr 360px; /* Слева основная зона, справа фиксированная колонка заметок */
+        grid-template-columns: 1fr 360px; 
       }
     }
 
@@ -234,7 +234,7 @@
       align-content: start;
     }
 
-    /* Правая колонка для заметок */
+    /* Правая колонка для единой ленты заметок */
     .twitter-column {
       display: flex;
       flex-direction: column;
@@ -247,14 +247,15 @@
       color: #ffffff;
     }
 
-    .tweet-creator-card {
+    /* Единый блок-контейнер для заметок со встроенным полем ввода (Telegram-стиль) */
+    .twitter-card-container {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 14px;
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 14px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
@@ -264,6 +265,92 @@
       color: var(--text-muted);
     }
 
+    /* Поле ввода со встроенной кнопкой в одну строчку */
+    .telegram-input-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .telegram-input-box textarea {
+      width: 100%;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-main);
+      padding: 10px 48px 10px 12px;
+      font-size: 0.85rem;
+      min-height: 44px;
+      max-height: 120px;
+      resize: vertical;
+    }
+
+    .telegram-input-box textarea:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    .telegram-send-btn {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      background-color: var(--accent-color);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .telegram-send-btn:hover {
+      background-color: var(--accent-hover);
+    }
+
+    /* Иконка самолетика (Telegram style) */
+    .telegram-send-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    /* Разделитель внутри общей ленты */
+    .twitter-divider {
+      height: 1px;
+      background-color: var(--border-color);
+      margin: 4px 0;
+    }
+
+    /* Список отправленных постов внутри единого блока */
+    .tweets-scroll-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tweet-item {
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .tweet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Обычные виджеты */
     .card {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -397,11 +484,6 @@
       border-color: var(--accent-color);
     }
 
-    textarea.widget-input {
-      min-height: 80px;
-      resize: vertical;
-    }
-
     .savings-row {
       display: flex;
       justify-content: space-between;
@@ -442,25 +524,6 @@
 
     .task-item.done input[type="text"] {
       text-decoration: line-through;
-      color: var(--text-muted);
-    }
-
-    .tweet-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    .tweet-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.75rem;
       color: var(--text-muted);
     }
   </style>
@@ -515,10 +578,9 @@
       </div>
     </header>
 
-    <!-- Основной макет страницы на 2 колонки (слева панель управления и виджеты, справа лента заметок) -->
     <div class="page-layout">
       
-      <!-- Левая колонка: панель добавления виджетов + сетка карточек -->
+      <!-- Левая колонка -->
       <div class="left-column">
         <div class="widget-controls">
           <span class="widget-controls-title">Добавить виджет:</span>
@@ -527,22 +589,29 @@
           <button class="primary" onclick="addWidget('tasks')">+ Список задач</button>
         </div>
 
-        <div class="main-grid" id="mainDashboard">
-          <!-- Сюда динамически добавляются виджеты (счетчики, цели, задачи) -->
-        </div>
+        <div class="main-grid" id="mainDashboard"></div>
       </div>
 
-      <!-- Правая колонка: Лента заметок (всегда на месте справа) -->
+      <!-- Правая колонка: Единый блок Ленты заметок -->
       <div class="twitter-column">
         <div class="twitter-column-title">Лента заметок</div>
         
-        <div class="tweet-creator-card">
+        <div class="twitter-card-container">
           <div class="tweet-creator-label">Написать новую заметку</div>
-          <textarea id="newTweetText" class="widget-input" placeholder="Что нового?"></textarea>
-          <button class="primary" onclick="postNewTweet()">Отправить заметку</button>
-        </div>
+          
+          <!-- Поле ввода со встроенной кнопкой в стиле Telegram -->
+          <div class="telegram-input-box">
+            <textarea id="newTweetText" class="widget-input" placeholder="Что нового?" rows="2" onkeydown="handleKeySend(event)"></textarea>
+            <button class="telegram-send-btn" onclick="postNewTweet()" title="Отправить">
+              <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+            </button>
+          </div>
 
-        <div id="twitterTweetsList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+          <div class="twitter-divider" id="tweetsDivider" style="display: none;"></div>
+
+          <!-- Список сохраненных заметок внутри единого блока -->
+          <div id="twitterTweetsList" class="tweets-scroll-list"></div>
+        </div>
       </div>
 
     </div>
@@ -708,6 +777,14 @@
       saveAndRender();
     }
 
+    // Отправка по нажатию Enter (если без Shift)
+    function handleKeySend(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        postNewTweet();
+      }
+    }
+
     function postNewTweet() {
       const input = document.getElementById('newTweetText');
       const text = input.value.trim();
@@ -752,6 +829,7 @@
     function render() {
       const mainGrid = document.getElementById('mainDashboard');
       const twitterTweetsList = document.getElementById('twitterTweetsList');
+      const tweetsDivider = document.getElementById('tweetsDivider');
 
       mainGrid.innerHTML = '';
       twitterTweetsList.innerHTML = '';
@@ -759,17 +837,24 @@
       const diaryWidgets = widgets.filter(w => w.type === 'diary');
       const otherWidgets = widgets.filter(w => w.type !== 'diary');
 
+      // Показываем разделитель в ленте заметок только если есть сами заметки
+      if (diaryWidgets.length > 0) {
+        tweetsDivider.style.display = 'block';
+      } else {
+        tweetsDivider.style.display = 'none';
+      }
+
       diaryWidgets.forEach(w => {
-        const tweetCard = document.createElement('div');
-        tweetCard.className = 'tweet-card';
-        tweetCard.innerHTML = `
+        const tweetItem = document.createElement('div');
+        tweetItem.className = 'tweet-item';
+        tweetItem.innerHTML = `
           <div class="tweet-header">
             <span>${w.createdAt || 'Только что'}</span>
             <button class="btn-delete" onclick="deleteWidget(${w.id})" title="Удалить заметку">&times;</button>
           </div>
-          <textarea class="widget-input" onchange="updateDiary(${w.id}, this.value)">${w.data.text || ''}</textarea>
+          <textarea class="widget-input" rows="2" onchange="updateDiary(${w.id}, this.value)">${w.data.text || ''}</textarea>
         `;
-        twitterTweetsList.appendChild(tweetCard);
+        twitterTweetsList.appendChild(tweetItem);
       });
 
       otherWidgets.forEach(w => {
