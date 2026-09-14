@@ -537,7 +537,7 @@
       }
     }
 
-    // Регистрация
+    // Регистрация (теперь создает абсолютно пустой аккаунт без виджетов)
     async function handleRegister(e) {
       e.preventDefault();
       const regError = document.getElementById('regError');
@@ -551,19 +551,16 @@
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
+        // Сохраняем только профиль пользователя
         await db.collection('users').doc(user.uid).set({
           name: name,
           email: email,
           createdAt: new Date()
         });
 
-        const defaultWidgets = [
-          { id: 1, type: 'counter', title: 'Чистые дни', data: { count: 0 } },
-          { id: 2, type: 'savings', title: 'Финансовая цель', data: { current: 0, target: 100000 } }
-        ];
-
+        // Создаем пустой список виджетов для нового аккаунта
         await db.collection('users').doc(user.uid).collection('data').doc('widgets').set({
-          list: defaultWidgets
+          list: []
         });
 
       } catch (error) {
@@ -577,7 +574,6 @@
         }
       }
     }
-
     function logout() {
       auth.signOut();
     }
