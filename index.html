@@ -410,17 +410,17 @@
       </div>
 
       <!-- Форма Входа -->
-      <form id="loginForm" class="auth-form" onsubmit="handleAuth(event)">
-        <input type="email" class="auth-input" placeholder="Ваша почта (Email)" required>
-        <input type="password" class="auth-input" placeholder="Пароль" required>
+      <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
+        <input type="email" id="loginEmail" class="auth-input" placeholder="Ваша почта (Email)" required>
+        <input type="password" id="loginPassword" class="auth-input" placeholder="Пароль" required>
         <button type="submit" class="primary" style="margin-top: 8px; padding: 10px;">Войти в личный кабинет</button>
       </form>
 
       <!-- Форма Регистрации -->
-      <form id="registerForm" class="auth-form" style="display: none;" onsubmit="handleAuth(event)">
-        <input type="text" class="auth-input" placeholder="Имя профиля" required>
-        <input type="email" class="auth-input" placeholder="Ваша почта (Email)" required>
-        <input type="password" class="auth-input" placeholder="Придумайте пароль" required>
+      <form id="registerForm" class="auth-form" style="display: none;" onsubmit="handleRegister(event)">
+        <input type="text" id="regName" class="auth-input" placeholder="Имя профиля" required>
+        <input type="email" id="regEmail" class="auth-input" placeholder="Ваша почта (Email)" required>
+        <input type="password" id="regPassword" class="auth-input" placeholder="Придумайте пароль" required>
         <button type="submit" class="primary" style="margin-top: 8px; padding: 10px;">Создать аккаунт</button>
       </form>
     </div>
@@ -458,6 +458,9 @@
   </div>
 
   <script>
+    // Инициализация пользователей из локального хранилища
+    let users = JSON.parse(localStorage.getItem('rebirth_users')) || [];
+
     // Хранилище виджетов
     let widgets = JSON.parse(localStorage.getItem('rebirth_widgets')) || [
       { id: 1, type: 'counter', title: 'Чистые дни без ставок', data: { count: 0 } },
@@ -483,11 +486,45 @@
       }
     }
 
-    // Обработка Входа / Регистрации
-    function handleAuth(e) {
+    // Обработка Входа
+    function handleLogin(e) {
       e.preventDefault();
-      localStorage.setItem('rebirth_logged_in', 'true');
-      showDashboard();
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const password = document.getElementById('loginPassword').value;
+
+      // Поиск пользователя
+      const user = users.find(u => u.email === email && u.password === password);
+
+      if (user) {
+        localStorage.setItem('rebirth_logged_in', 'true');
+        showDashboard();
+      } else {
+        alert('Пользователь не найден. Проверьте данные или зарегистрируйтесь!');
+      }
+    }
+
+    // Обработка Регистрации
+    function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim().toLowerCase();
+      const password = document.getElementById('regPassword').value;
+
+      // Проверка, существует ли уже почта
+      const existingUser = users.find(u => u.email === email);
+      if (existingUser) {
+        alert('Пользователь с такой почтой уже зарегистрирован! Войдите в аккаунт.');
+        setAuthTab('login');
+        return;
+      }
+
+      // Сохранение нового пользователя
+      users.push({ name, email, password });
+      localStorage.setItem('rebirth_users', JSON.stringify(users));
+
+      alert('Регистрация прошла успешно! Теперь войдите в систему.');
+      setAuthTab('login');
+      document.getElementById('loginEmail').value = email;
     }
 
     // Выход из системы
