@@ -209,17 +209,16 @@
       margin-right: 6px;
     }
 
-    /* Динамическая разметка в стиле Twitter (справа колонка для заметок, слева для остальных) */
+    /* Общий макет: слева основные виджеты, справа постоянная колонка заметок */
     .dashboard-layout {
       display: grid;
       grid-template-columns: 1fr;
       gap: 20px;
-      transition: grid-template-columns 0.3s ease;
     }
 
     @media (min-width: 900px) {
-      .dashboard-layout.has-twitter {
-        grid-template-columns: 1fr 360px; /* Слева основные виджеты, справа стена заметок */
+      .dashboard-layout {
+        grid-template-columns: 1fr 360px; 
       }
     }
 
@@ -230,7 +229,7 @@
       align-content: start;
     }
 
-    /* Колонка заметок в стиле Twitter (справа) */
+    /* Правая колонка для заметок (всегда на месте справа от дашборда) */
     .twitter-column {
       display: flex;
       flex-direction: column;
@@ -242,9 +241,24 @@
       font-weight: 600;
       color: #ffffff;
       margin-bottom: -4px;
+    }
+
+    /* Блок создания новой заметки */
+    .tweet-creator-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 16px;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .tweet-creator-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
     }
 
     .card {
@@ -428,7 +442,7 @@
       color: var(--text-muted);
     }
 
-    /* Стили постов-заметок (стена Твиттера) */
+    /* Карточки отправленных постов-заметок */
     .tweet-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -446,34 +460,6 @@
       align-items: center;
       font-size: 0.75rem;
       color: var(--text-muted);
-    }
-
-    .tweet-text {
-      width: 100%;
-      background-color: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      color: var(--text-main);
-      padding: 8px 10px;
-      font-size: 0.85rem;
-      resize: vertical;
-      min-height: 60px;
-    }
-
-    .tweet-text:focus {
-      outline: none;
-      border-color: var(--accent-color);
-    }
-
-    .tweet-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 6px;
-    }
-
-    .tweet-actions button {
-      padding: 4px 10px;
-      font-size: 0.75rem;
     }
   </style>
 </head>
@@ -532,16 +518,26 @@
       <button class="primary" onclick="addWidget('counter')">+ Счетчик дней</button>
       <button class="primary" onclick="addWidget('savings')">+ Накопление</button>
       <button class="primary" onclick="addWidget('tasks')">+ Список задач</button>
-      <button class="primary" onclick="addWidget('diary')">+ Заметка</button>
     </div>
 
-    <!-- Общий макет дашборда: при наличии заметок трансформируется в 2 колонки -->
-    <div class="dashboard-layout" id="dashboardLayout">
+    <!-- Макет: слева основные виджеты, справа постоянная колонка заметок -->
+    <div class="dashboard-layout">
       <div class="main-grid" id="mainDashboard">
         <!-- Основные виджеты (счетчики, цели, задачи) -->
       </div>
-      <div class="twitter-column" id="twitterColumn" style="display: none;">
-        <div class="twitter-column-title"><span>Лента заметок</span></div>
+      
+      <!-- Правая колонка заметок -->
+      <div class="twitter-column">
+        <div class="twitter-column-title">Лента заметок</div>
+        
+        <!-- Постоянное поле для создания новой заметки -->
+        <div class="tweet-creator-card">
+          <div class="tweet-creator-label">Написать новую заметку</div>
+          <textarea id="newTweetText" class="widget-input" placeholder="Что нового?"></textarea>
+          <button class="primary" onclick="postNewTweet()">Отправить заметку</button>
+        </div>
+
+        <!-- Список сохраненных заметок -->
         <div id="twitterTweetsList" style="display: flex; flex-direction: column; gap: 12px;"></div>
       </div>
     </div>
@@ -696,24 +692,36 @@
     }
 
     function addWidget(type) {
-      const now = new Date();
-      const timeString = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' в ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-
       const newWidget = {
         id: Date.now(),
         type: type,
         title: getDefaultTitle(type),
-        createdAt: timeString,
         data: getDefaultData(type)
       };
       
-      // Если это заметка в стиле Твиттера, добавляем её в НАЧАЛО массива, чтобы новые были сверху
-      if (type === 'diary') {
-        widgets.unshift(newWidget);
-      } else {
-        widgets.push(newWidget);
-      }
+      widgets.push(newWidget);
+      saveAndRender();
+    }
 
+    // Создание новой заметки через форму сверху справа
+    function postNewTweet() {
+      const input = document.getElementById('newTweetText');
+      const text = input.value.trim();
+      if (!text) return; // Не отправляем пустые заметки
+
+      const now = new Date();
+      const timeString = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' в ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+      const newTweet = {
+        id: Date.now(),
+        type: 'diary',
+        createdAt: timeString,
+        data: { text: text }
+      };
+
+      // Добавляем в начало массива, чтобы новые посты были сверху
+      widgets.unshift(newTweet);
+      input.value = ''; // очищаем поле ввода
       saveAndRender();
     }
 
@@ -722,7 +730,6 @@
         case 'counter': return 'Счетчик дней';
         case 'savings': return 'Финансовая цель';
         case 'tasks': return 'Мои задачи';
-        case 'diary': return 'Заметка';
       }
     }
 
@@ -731,7 +738,6 @@
         case 'counter': return { count: 0 };
         case 'savings': return { current: 0, target: 100000 };
         case 'tasks': return [{ text: 'Первая задача', done: false }];
-        case 'diary': return { text: '' };
       }
     }
 
@@ -742,40 +748,30 @@
 
     function render() {
       const mainGrid = document.getElementById('mainDashboard');
-      const twitterColumn = document.getElementById('twitterColumn');
       const twitterTweetsList = document.getElementById('twitterTweetsList');
-      const dashboardLayout = document.getElementById('dashboardLayout');
 
       mainGrid.innerHTML = '';
       twitterTweetsList.innerHTML = '';
 
-      // Фильтруем заметки (тип 'diary') отдельно от остальных виджетов
+      // Разделяем заметки (тип 'diary') и остальные виджеты
       const diaryWidgets = widgets.filter(w => w.type === 'diary');
       const otherWidgets = widgets.filter(w => w.type !== 'diary');
 
-      // Управление стеной Твиттера справа
-      if (diaryWidgets.length > 0) {
-        dashboardLayout.classList.add('has-twitter');
-        twitterColumn.style.display = 'flex';
+      // Рендерим отправленные заметки в правой колонке
+      diaryWidgets.forEach(w => {
+        const tweetCard = document.createElement('div');
+        tweetCard.className = 'tweet-card';
+        tweetCard.innerHTML = `
+          <div class="tweet-header">
+            <span>${w.createdAt || 'Только что'}</span>
+            <button class="btn-delete" onclick="deleteWidget(${w.id})" title="Удалить заметку">&times;</button>
+          </div>
+          <textarea class="widget-input" onchange="updateDiary(${w.id}, this.value)">${w.data.text || ''}</textarea>
+        `;
+        twitterTweetsList.appendChild(tweetCard);
+      });
 
-        diaryWidgets.forEach(w => {
-          const tweetCard = document.createElement('div');
-          tweetCard.className = 'tweet-card';
-          tweetCard.innerHTML = `
-            <div class="tweet-header">
-              <span>${w.createdAt || 'Только что'}</span>
-              <button class="btn-delete" onclick="deleteWidget(${w.id})" title="Удалить заметку">&times;</button>
-            </div>
-            <textarea class="tweet-text" placeholder="Что нового?" onchange="updateDiary(${w.id}, this.value)">${w.data.text || ''}</textarea>
-          `;
-          twitterTweetsList.appendChild(tweetCard);
-        });
-      } else {
-        dashboardLayout.classList.remove('has-twitter');
-        twitterColumn.style.display = 'none';
-      }
-
-      // Отрисовка остальных виджетов (счетчики, цели, задачи) в центре
+      // Рендерим основные виджеты слева
       otherWidgets.forEach(w => {
         const card = document.createElement('div');
         card.className = 'card';
